@@ -1,0 +1,377 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile in the ElderLink application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user profile."
+        },
+        "userType": {
+          "type": "string",
+          "description": "The type of user (Senior, Guardian, ServiceProvider, Admin).",
+          "format": "enum",
+          "items": {
+            "type": "string"
+          }
+        },
+        "phone": {
+          "type": "string",
+          "description": "User's phone number."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "emergencyContactName": {
+          "type": "string",
+          "description": "Name of the emergency contact."
+        },
+        "emergencyContactPhone": {
+          "type": "string",
+          "description": "Phone number of the emergency contact."
+        },
+        "healthPreferences": {
+          "type": "string",
+          "description": "User's health preferences and privacy controls."
+        },
+        "seniorSkills": {
+          "type": "string",
+          "description": "Skills and job profile for senior users."
+        }
+      },
+      "required": [
+        "id",
+        "userType",
+        "firstName",
+        "lastName"
+      ]
+    },
+    "MoodCheckin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MoodCheckin",
+      "type": "object",
+      "description": "Represents a mood check-in entry for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the mood check-in."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N MoodCheckin)"
+        },
+        "moodScore": {
+          "type": "number",
+          "description": "Numerical representation of the user's mood."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes about the user's mood."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Date and time of the mood check-in.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "moodScore",
+        "timestamp"
+      ]
+    },
+    "CommunityForum": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CommunityForum",
+      "type": "object",
+      "description": "Represents a community forum for users to connect.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the forum."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the community forum."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the forum's purpose."
+        },
+        "interest": {
+          "type": "string",
+          "description": "The main interest area of the forum."
+        },
+        "location": {
+          "type": "string",
+          "description": "Location associated with the forum."
+        },
+        "memberIds": {
+          "type": "array",
+          "description": "References to UserProfiles. (Relationship: UserProfile N:N CommunityForum)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "EmergencyAlert": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EmergencyAlert",
+      "type": "object",
+      "description": "Represents an emergency alert sent by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the emergency alert."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N EmergencyAlert)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Date and time of the alert.",
+          "format": "date-time"
+        },
+        "location": {
+          "type": "string",
+          "description": "Location of the user when the alert was sent."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the emergency alert (e.g., pending, resolved)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "status"
+      ]
+    },
+    "TelemedicineAppointment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TelemedicineAppointment",
+      "type": "object",
+      "description": "Represents a telemedicine appointment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the appointment."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N TelemedicineAppointment)"
+        },
+        "doctorId": {
+          "type": "string",
+          "description": "Reference to UserProfile (as service provider). (Relationship: UserProfile 1:N TelemedicineAppointment)"
+        },
+        "appointmentTime": {
+          "type": "string",
+          "description": "Date and time of the appointment.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Notes or reason for the appointment."
+        },
+        "prescriptionIds": {
+          "type": "array",
+          "description": "References to Prescriptions. (Relationship: Prescription 1:N TelemedicineAppointment)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "doctorId",
+        "appointmentTime"
+      ]
+    },
+    "Prescription": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Prescription",
+      "type": "object",
+      "description": "Represents a medical prescription.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the prescription."
+        },
+        "doctorId": {
+          "type": "string",
+          "description": "Reference to UserProfile (Doctor). (Relationship: UserProfile 1:N Prescription)"
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to UserProfile (Patient). (Relationship: UserProfile 1:N Prescription)"
+        },
+        "medication": {
+          "type": "string",
+          "description": "Name of the prescribed medication."
+        },
+        "dosage": {
+          "type": "string",
+          "description": "Dosage instructions for the medication."
+        },
+        "refills": {
+          "type": "number",
+          "description": "Number of refills allowed."
+        }
+      },
+      "required": [
+        "id",
+        "doctorId",
+        "patientId",
+        "medication",
+        "dosage"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. Each document is identified by the user's unique Firebase Auth ID. No denormalized authorization fields required as this is the root of user-owned data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth ID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/moodCheckins/{moodCheckinId}",
+        "definition": {
+          "entityName": "MoodCheckin",
+          "schema": {
+            "$ref": "#/backend/entities/MoodCheckin"
+          },
+          "description": "Stores mood check-in entries for each user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth ID of the user."
+            },
+            {
+              "name": "moodCheckinId",
+              "description": "The unique ID of the mood check-in entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/communityForums/{communityForumId}",
+        "definition": {
+          "entityName": "CommunityForum",
+          "schema": {
+            "$ref": "#/backend/entities/CommunityForum"
+          },
+          "description": "Stores community forum information.  Includes 'memberIds' array for managing forum membership. Collaborative features built on top of this structure may need to denormalize the members map to the documents that require authorization.",
+          "params": [
+            {
+              "name": "communityForumId",
+              "description": "The unique ID of the community forum."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/emergencyAlerts/{emergencyAlertId}",
+        "definition": {
+          "entityName": "EmergencyAlert",
+          "schema": {
+            "$ref": "#/backend/entities/EmergencyAlert"
+          },
+          "description": "Stores emergency alerts sent by users. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth ID of the user."
+            },
+            {
+              "name": "emergencyAlertId",
+              "description": "The unique ID of the emergency alert."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/telemedicineAppointments/{telemedicineAppointmentId}",
+        "definition": {
+          "entityName": "TelemedicineAppointment",
+          "schema": {
+            "$ref": "#/backend/entities/TelemedicineAppointment"
+          },
+          "description": "Stores telemedicine appointment information for users. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth ID of the user."
+            },
+            {
+              "name": "telemedicineAppointmentId",
+              "description": "The unique ID of the telemedicine appointment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/prescriptions/{prescriptionId}",
+        "definition": {
+          "entityName": "Prescription",
+          "schema": {
+            "$ref": "#/backend/entities/Prescription"
+          },
+          "description": "Stores prescription information for users. Includes denormalized 'patientId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth ID of the user."
+            },
+            {
+              "name": "prescriptionId",
+              "description": "The unique ID of the prescription."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support ElderLink's core features in Phase 1, focusing on health, SOS, communication, and bookings. It emphasizes authorization independence and efficient data retrieval, aligning with the provided architectural guidelines. User profiles are stored in a dedicated collection, while user-specific data (mood check-ins, emergency alerts, telemedicine appointments, and prescriptions) are stored in subcollections under the user's document. This ensures clear ownership and simplifies security rules. Community forums are stored in a top-level collection, with membership managed via a `memberIds` array directly on the forum document.\n\n**Authorization Independence:**\n\n*   **User Profiles:** No authorization context is needed, as user profiles are publicly readable.\n*   **Mood Check-ins, Emergency Alerts, Telemedicine Appointments, Prescriptions:** These are stored as subcollections under `/users/{userId}`, making ownership explicit and authorization independent. Security rules can directly use `request.auth.uid == userId` without needing to read parent documents.\n*   **Community Forums:** While a `memberIds` array exists, any collaborative features built on top of this structure will need to denormalize the members map to the documents that require authorization.\n\n**QAPs (Query Authorization and Privacy):**\n\n*   The path-based ownership model (e.g., `/users/{userId}/moodCheckins/{moodCheckinId}`) allows for secure listing of user-specific data. Rules can efficiently filter based on the `userId`.\n*   Community forums, although using a `memberIds` array, can be secured using rules that check if `request.auth.uid` is present in the `memberIds` array for write operations. Read operations can be restricted to only members if needed, or made public with appropriate data sanitization. This supports the QAP requirement by allowing secure listing based on membership."
+  }
+}
