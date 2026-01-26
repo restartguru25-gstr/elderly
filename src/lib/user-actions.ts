@@ -8,15 +8,17 @@ import { setDocumentNonBlocking } from '@/firebase';
 export type UserProfileAddon = {
   firstName: string;
   lastName:string;
-  userType: 'senior' | 'guardian';
+  userType: 'senior' | 'guardian' | 'provider' | 'admin';
   phone?: string | null;
-  emergencyContacts?: string;
-  healthConditions?: string;
+  age?: number;
+  emergencyContacts?: string[];
+  healthConditions?: string[];
   language?: string;
   permissions?: {
     vitals: boolean;
     location: boolean;
   };
+  linkedProfiles?: string[];
 }
 
 /**
@@ -28,7 +30,7 @@ export type UserProfileAddon = {
 export function createUserProfile(
   firestore: Firestore,
   user: User,
-  additionalData: UserProfileAddon
+  additionalData: Partial<UserProfileAddon>
 ) {
   if (!user) throw new Error('User object is required to create a profile.');
 
@@ -37,14 +39,16 @@ export function createUserProfile(
   const profileData = {
     id: user.uid,
     email: user.email,
-    firstName: additionalData.firstName,
-    lastName: additionalData.lastName,
-    userType: additionalData.userType,
+    firstName: additionalData.firstName || 'New',
+    lastName: additionalData.lastName || 'User',
+    userType: additionalData.userType || 'guardian',
     phone: additionalData.phone || user.phoneNumber || '',
-    emergencyContacts: additionalData.emergencyContacts || '',
-    healthConditions: additionalData.healthConditions || '',
+    age: additionalData.age || null,
+    emergencyContacts: additionalData.emergencyContacts || [],
+    healthConditions: additionalData.healthConditions || [],
     language: additionalData.language || 'en',
     permissions: additionalData.permissions || { vitals: true, location: true },
+    linkedProfiles: additionalData.linkedProfiles || [],
     createdAt: serverTimestamp(),
   };
 

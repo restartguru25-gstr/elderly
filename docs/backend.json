@@ -13,11 +13,8 @@
         },
         "userType": {
           "type": "string",
-          "description": "The type of user (senior, guardian).",
-          "enum": [
-            "senior",
-            "guardian"
-          ]
+          "description": "The type of user.",
+          "enum": ["senior", "guardian", "provider", "admin"]
         },
         "phone": {
           "type": "string",
@@ -36,13 +33,30 @@
           "type": "string",
           "description": "User's last name."
         },
+        "age": {
+            "type": "number",
+            "description": "User's age."
+        },
+        "linkedProfiles": {
+            "type": "array",
+            "description": "Array of user UIDs linked to this profile (e.g., senior's UID in a guardian's profile).",
+            "items": {
+                "type": "string"
+            }
+        },
         "emergencyContacts": {
-          "type": "string",
-          "description": "Comma-separated list of emergency contacts (name, phone, relationship)."
+          "type": "array",
+          "description": "List of emergency contacts.",
+          "items": {
+            "type": "string"
+          }
         },
         "healthConditions": {
-          "type": "string",
-          "description": "Notes on pre-existing health conditions."
+          "type": "array",
+          "description": "List of pre-existing health conditions.",
+           "items": {
+            "type": "string"
+          }
         },
         "language": {
             "type": "string",
@@ -70,6 +84,21 @@
         "lastName",
         "email"
       ]
+    },
+    "ProfileLink": {
+        "title": "ProfileLink",
+        "type": "object",
+        "description": "Represents the link between a senior and a guardian user.",
+        "properties": {
+            "id": { "type": "string" },
+            "seniorUid": { "type": "string" },
+            "guardianUid": { "type": "string" },
+            "status": {
+                "type": "string",
+                "enum": ["pending", "active"]
+            }
+        },
+        "required": ["seniorUid", "guardianUid", "status"]
     },
     "DailyCheckin": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -602,6 +631,22 @@
         }
       },
       {
+        "path": "/profile_links/{linkId}",
+        "definition": {
+            "entityName": "ProfileLink",
+            "schema": {
+                "$ref": "#/backend/entities/ProfileLink"
+            },
+            "description": "Stores the relationship status between senior and guardian users.",
+            "params": [
+                {
+                    "name": "linkId",
+                    "description": "The unique ID of the link."
+                }
+            ]
+        }
+      },
+      {
         "path": "/users/{userId}/daily_checkins/{dailyCheckinId}",
         "definition": {
           "entityName": "DailyCheckin",
@@ -869,5 +914,3 @@
     "reasoning": "The Firestore structure is designed to support ElderLink's core features in Phase 1, focusing on health, SOS, communication, and bookings. It emphasizes authorization independence and efficient data retrieval, aligning with the provided architectural guidelines. User profiles are stored in a dedicated collection, while user-specific data (mood check-ins, emergency alerts, telemedicine appointments, and prescriptions) are stored in subcollections under the user's document. This ensures clear ownership and simplifies security rules. Community forums are stored in a top-level collection, with membership managed via a `memberIds` array directly on the forum document.\n\n**Authorization Independence:**\n\n*   **User Profiles:** No authorization context is needed, as user profiles are publicly readable.\n*   **Mood Check-ins, Emergency Alerts, Telemedicine Appointments, Prescriptions:** These are stored as subcollections under `/users/{userId}`, making ownership explicit and authorization independent. Security rules can directly use `request.auth.uid == userId` without needing to read parent documents.\n*   **Community Forums:** While a `memberIds` array exists, any collaborative features built on top of this structure will need to denormalize the members map to the documents that require authorization.\n\n**QAPs (Query Authorization and Privacy):**\n\n*   The path-based ownership model (e.g., `/users/{userId}/moodCheckins/{moodCheckinId}`) allows for secure listing of user-specific data. Rules can efficiently filter based on the `userId`.\n*   Community forums, although using a `memberIds` array, can be secured using rules that check if `request.auth.uid` is present in the `memberIds` array for write operations. Read operations can be restricted to only members if needed, or made public with appropriate data sanitization. This supports the QAP requirement by allowing secure listing based on membership."
   }
 }
-
-    

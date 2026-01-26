@@ -225,6 +225,18 @@ service cloud.firestore {
       }
     }
 
+    /**
+     * @description Manages the link between a senior and a guardian.
+     * @path /profile_links/{linkId}
+     * @principle A guardian can create a pending link. The senior can accept it.
+     */
+     match /profile_links/{linkId} {
+      allow get: if isSignedIn() && (isOwner(resource.data.seniorUid) || isOwner(resource.data.guardianUid));
+      allow create: if isSignedIn() && isOwner(request.resource.data.guardianUid) && request.resource.data.status == 'pending';
+      allow update: if isSignedIn() && isOwner(resource.data.seniorUid) && request.resource.data.status == 'active';
+      allow delete: if isSignedIn() && isOwner(resource.data.guardianUid) && resource.data.status == 'pending';
+    }
+
 
     /**
      * @description Manages shared community forums. Signed-in users can read forums.
@@ -304,5 +316,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

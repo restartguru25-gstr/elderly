@@ -22,6 +22,7 @@ import { Separator } from '../ui/separator';
 const profileFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required.'),
   lastName: z.string().min(1, 'Last name is required.'),
+  age: z.coerce.number().optional(),
   phone: z.string().optional(),
   language: z.string().optional(),
   emergencyContacts: z.string().optional(),
@@ -48,6 +49,7 @@ export function ProfileForm() {
     defaultValues: {
       firstName: '',
       lastName: '',
+      age: undefined,
       phone: '',
       language: 'en',
       emergencyContacts: '',
@@ -64,10 +66,11 @@ export function ProfileForm() {
       form.reset({
         firstName: userProfile.firstName || '',
         lastName: userProfile.lastName || '',
+        age: userProfile.age || undefined,
         phone: userProfile.phone || '',
         language: userProfile.language || 'en',
-        emergencyContacts: userProfile.emergencyContacts || '',
-        healthConditions: userProfile.healthConditions || '',
+        emergencyContacts: userProfile.emergencyContacts?.join('\n') || '',
+        healthConditions: userProfile.healthConditions?.join('\n') || '',
         permissions: userProfile.permissions || { vitals: true, location: true },
       });
     }
@@ -77,7 +80,13 @@ export function ProfileForm() {
     if (!user) return;
     setIsSaving(true);
     
-    updateUserProfile(firestore, user.uid, data)
+    const updateData = {
+        ...data,
+        emergencyContacts: data.emergencyContacts?.split('\n').filter(c => c.trim() !== '') || [],
+        healthConditions: data.healthConditions?.split('\n').filter(c => c.trim() !== '') || [],
+    }
+
+    updateUserProfile(firestore, user.uid, updateData)
       .then(() => {
         toast({
           title: 'Profile Updated',
@@ -157,19 +166,34 @@ export function ProfileForm() {
             )}
             />
         </div>
-        <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <FormControl>
-                    <Input placeholder="Your phone number" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="age"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Age</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="Your age" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Your phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
          <FormField
             control={form.control}
             name="language"
@@ -206,13 +230,13 @@ export function ProfileForm() {
               <FormLabel>Emergency Contacts</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="E.g., Jane Doe (Daughter) - 555-1234, Mike Smith (Neighbor) - 555-5678"
+                  placeholder="e.g., Jane Doe (Daughter) - 555-1234, Mike Smith (Neighbor) - 555-5678. Add one contact per line."
                   {...field}
                   rows={4}
                 />
               </FormControl>
               <FormDescription>
-                List your emergency contacts, separated by commas. Include their name, relationship, and phone number.
+                List your emergency contacts, one per line. Include their name, relationship, and phone number.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -226,13 +250,13 @@ export function ProfileForm() {
               <FormLabel>Pre-existing Health Conditions</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="e.g., Hypertension, Diabetes Type 2, Allergic to Penicillin"
+                  placeholder="e.g., Hypertension, Diabetes Type 2, Allergic to Penicillin. Add one condition per line."
                   {...field}
                   rows={4}
                 />
               </FormControl>
                <FormDescription>
-                List any important health information or allergies.
+                List any important health information or allergies, one per line.
               </FormDescription>
               <FormMessage />
             </FormItem>
