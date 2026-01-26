@@ -91,6 +91,13 @@ service cloud.firestore {
     function isChatMember(chatId) {
       return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberIds;
     }
+    
+    /**
+     * Checks if a user is a member of a community forum by reading the forum document.
+     */
+    function isForumMember(forumId) {
+      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/communityForums/$(forumId)).data.memberIds;
+    }
 
 
     // ----------------------------------------------------------------------
@@ -239,7 +246,18 @@ service cloud.firestore {
           request.resource.data.memberIds.hasAny([request.auth.uid])
         )
       );
-      allow delete: if false;
+      allow delete: if false; // Deleting forums is disabled.
+
+      /**
+       * @description Manages posts within a community forum.
+       * @path /communityForums/{communityForumId}/posts/{postId}
+       * @principle Access is restricted to members of the parent forum.
+       */
+      match /posts/{postId} {
+        allow list, get: if isForumMember(communityForumId);
+        allow create: if isForumMember(communityForumId) && request.resource.data.authorId == request.auth.uid;
+        allow update, delete: if isForumMember(communityForumId) && resource.data.authorId == request.auth.uid;
+      }
     }
 
     /**
@@ -276,3 +294,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

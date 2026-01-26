@@ -43,9 +43,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { createCommunityForum, joinCommunityForum } from '@/lib/community-actions';
+import { createCommunityForum } from '@/lib/community-actions';
 import { WithId } from '@/firebase/firestore/use-collection';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 const forumSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
@@ -163,53 +164,36 @@ function CreateForumDialog({
 }
 
 function ForumCard({ group }: { group: WithId<CommunityForum> }) {
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const { toast } = useToast();
-  const [isJoining, setIsJoining] = useState(false);
-
   const image = PlaceHolderImages.find((p) => p.id === group.imageId) || PlaceHolderImages.find(p => p.id === 'community-yoga');
-  
-  const isMember = user ? group.memberIds.includes(user.uid) : false;
-
-  const handleJoin = () => {
-    if(!user) return;
-    setIsJoining(true);
-    joinCommunityForum(firestore, group.id, user.uid)
-    .then(() => {
-        toast({ title: "Joined!", description: `You are now a member of ${group.name}`})
-    })
-    .finally(() => setIsJoining(false));
-  }
 
   return (
-    <Card key={group.id} className="overflow-hidden flex flex-col">
-      {image && (
-        <div className="relative h-48 w-full">
-          <Image
-            src={image.imageUrl}
-            alt={group.name}
-            fill={true}
-            style={{objectFit: 'cover'}}
-            data-ai-hint={image.imageHint}
-          />
-        </div>
-      )}
-      <CardHeader>
-        <CardTitle>{group.name}</CardTitle>
-        <CardDescription>{group.description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-grow" />
-      <CardFooter className="flex justify-between items-center bg-secondary/40 py-3 px-6">
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Users className="h-4 w-4 mr-2" />
-          {group.memberIds?.length || 0} members
-        </div>
-        <Button onClick={handleJoin} disabled={isJoining || isMember}>
-          {isJoining ? <Loader2 className="animate-spin" /> : isMember ? 'Joined' : 'Join Group'}
-        </Button>
-      </CardFooter>
-    </Card>
+    <Link href={`/dashboard/community/${group.id}`} className="block hover:shadow-lg transition-shadow rounded-lg">
+        <Card key={group.id} className="overflow-hidden flex flex-col h-full">
+        {image && (
+            <div className="relative h-48 w-full">
+            <Image
+                src={image.imageUrl}
+                alt={group.name}
+                fill={true}
+                style={{objectFit: 'cover'}}
+                data-ai-hint={image.imageHint}
+            />
+            </div>
+        )}
+        <CardHeader>
+            <CardTitle>{group.name}</CardTitle>
+            <CardDescription>{group.description}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-grow" />
+        <CardFooter className="flex justify-between items-center bg-secondary/40 py-3 px-6">
+            <div className="flex items-center text-sm text-muted-foreground">
+            <Users className="h-4 w-4 mr-2" />
+            {group.memberIds?.length || 0} members
+            </div>
+            <Button variant="secondary" size="sm">View</Button>
+        </CardFooter>
+        </Card>
+    </Link>
   );
 }
 
@@ -259,3 +243,5 @@ export default function CommunityPage() {
     </div>
   );
 }
+
+    

@@ -53,3 +53,29 @@ export function joinCommunityForum(
     memberIds: arrayUnion(userId),
   });
 }
+
+export function createPostInForum(
+    firestore: Firestore,
+    forumId: string,
+    userId: string,
+    authorName: string,
+    content: string,
+) {
+    if (!forumId || !userId || !authorName) {
+        throw new Error('Forum ID, User ID, and Author Name are required to create a post.');
+    }
+
+    const postsCollectionRef = collection(firestore, 'communityForums', forumId, 'posts');
+
+    const postData = {
+        forumId,
+        authorId: userId,
+        authorName,
+        content,
+        createdAt: serverTimestamp(),
+    };
+
+    return addDocumentNonBlocking(postsCollectionRef, postData);
+}
+
+    
