@@ -2,7 +2,7 @@
 
 import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { User } from 'firebase/auth';
-import { initializeFirebase } from '@/firebase';
+import { initializeFirebase } from '@/firebase/init';
 
 // NOTE: This is a server-side action.
 // We initialize a server-side instance of Firebase to interact with Firestore.
