@@ -27,7 +27,7 @@ const TrackMoodWithNLPInputSchema = z.object({
 export type TrackMoodWithNLPInput = z.infer<typeof TrackMoodWithNLPInputSchema>;
 
 const TrackMoodWithNLPOutputSchema = z.object({
-  sentimentScore: z.number().describe('The sentiment score of the mood check-in text.'),
+  sentimentScore: z.number().describe('The sentiment score of the mood check-in text, from -1.0 (very negative) to 1.0 (very positive).'),
   notifyGuardian: z
     .boolean()
     .describe(
@@ -46,19 +46,13 @@ const prompt = ai.definePrompt({
   output: {schema: TrackMoodWithNLPOutputSchema},
   prompt: `You are an AI assistant that analyzes the sentiment of mood check-in text from senior citizens and determines if their guardian should be notified.
 
-You will receive the mood check-in text, the previous sentiment score (if available), and a guardian notification threshold.
+You will receive the mood check-in text. Analyze the sentiment and provide a sentiment score between -1.0 (very negative) and 1.0 (very positive).
 
-Analyze the sentiment of the mood check-in text. Provide a sentiment score between -1 (very negative) and 1 (very positive).
-
-Determine if the guardian should be notified. Notify the guardian if the current sentiment score drops below the guardian notification threshold compared to the previous sentiment score. If there is no previous sentiment score, do not notify the guardian.
+Then, determine if the guardian should be notified based on the provided threshold and previous score. If the current sentiment score drops below the guardian notification threshold compared to the previous sentiment score, set notifyGuardian to true. If there is no previous sentiment score, do not notify the guardian.
 
 Mood Check-in Text: {{{moodCheckIn}}}
 Previous Sentiment Score: {{#if previousSentimentScore}}{{{previousSentimentScore}}}{{else}}N/A{{/if}}
-Guardian Notification Threshold: {{{guardianNotificationThreshold}}}
-
-Output:
-Sentiment Score: {{(number)sentimentScore}}
-Notify Guardian: {{(boolean)notifyGuardian}}`,
+Guardian Notification Threshold: {{{guardianNotificationThreshold}}}`,
 });
 
 const trackMoodWithNLPFlow = ai.defineFlow(

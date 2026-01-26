@@ -162,6 +162,43 @@
         "description"
       ]
     },
+    "SkillListing": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SkillListing",
+      "type": "object",
+      "description": "Represents a skill or service offered by a user in the marketplace.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "authorId": {
+          "type": "string"
+        },
+        "authorName": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "authorId",
+        "authorName",
+        "title",
+        "category"
+      ]
+    },
     "EmergencyAlert": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "EmergencyAlert",
@@ -458,6 +495,22 @@
             {
               "name": "communityForumId",
               "description": "The unique ID of the community forum."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/skillListings/{skillListingId}",
+        "definition": {
+          "entityName": "SkillListing",
+          "schema": {
+            "$ref": "#/backend/entities/SkillListing"
+          },
+          "description": "Stores skill listings for the marketplace. Each document is owned by the author.",
+          "params": [
+            {
+              "name": "skillListingId",
+              "description": "The unique ID of the skill listing."
             }
           ]
         }

@@ -214,8 +214,28 @@ service cloud.firestore {
     match /communityForums/{communityForumId} {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn() && request.auth.uid in request.resource.data.memberIds;
-      allow update: if isExistingMember();
+      // Allow members to update details, or any user to join by adding themselves
+      allow update: if isSignedIn() && (
+        (isMember() && request.resource.data.memberIds == resource.data.memberIds) ||
+        (
+          request.resource.data.memberIds.size() == resource.data.memberIds.size() + 1 &&
+          request.resource.data.memberIds.hasAll(resource.data.memberIds) &&
+          request.resource.data.memberIds.hasAny([request.auth.uid])
+        )
+      );
       allow delete: if false;
+    }
+
+    /**
+     * @description Manages skill listings in the marketplace.
+     * @path /skillListings/{skillId}
+     * @allow (create) An authenticated user can create a listing for themselves.
+     * @principle Restricts write access to the owner of the listing.
+     */
+    match /skillListings/{skillId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(request.resource.data.authorId);
+      allow update, delete: if isExistingOwner(resource.data.authorId);
     }
   }
 }
