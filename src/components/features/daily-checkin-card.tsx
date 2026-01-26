@@ -16,9 +16,11 @@ export function DailyCheckinCard() {
   const { toast } = useToast();
   const [isCheckingIn, setIsCheckingIn] = React.useState(false);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const startOfToday = Timestamp.fromDate(today);
+  const startOfToday = React.useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Timestamp.fromDate(today);
+  }, []);
 
   const checkinsQuery = useMemoFirebase(() => {
     if (!user) return null;
