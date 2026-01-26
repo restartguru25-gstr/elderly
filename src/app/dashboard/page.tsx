@@ -3,14 +3,17 @@
 import { GuardianDashboard } from '@/components/features/guardian-dashboard';
 import { SeniorDashboard } from '@/components/features/senior-dashboard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDoc, useFirestore, useUser } from '@/firebase';
+import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
 
   if (isUserLoading || isProfileLoading) {

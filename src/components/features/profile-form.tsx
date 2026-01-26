@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useDoc, useFirestore, useUser } from '@/firebase';
+import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import React, { useEffect } from 'react';
 import { Skeleton } from '../ui/skeleton';
@@ -41,7 +41,10 @@ export function ProfileForm() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
 
-  const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
 
   const form = useForm<ProfileFormValues>({
