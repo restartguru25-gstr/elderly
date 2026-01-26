@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'ElderLink',
@@ -25,10 +26,12 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased min-h-screen bg-background')}>
-        <SidebarProvider>
-          {children}
-        </SidebarProvider>
-        <Toaster />
+        <FirebaseClientProvider>
+          <SidebarProvider>
+            {children}
+          </SidebarProvider>
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );

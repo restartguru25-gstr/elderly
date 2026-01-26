@@ -8,15 +8,12 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user profile."
+          "description": "Unique identifier for the user profile (matches Firebase Auth UID)."
         },
         "userType": {
           "type": "string",
-          "description": "The type of user (Senior, Guardian, ServiceProvider, Admin).",
-          "format": "enum",
-          "items": {
-            "type": "string"
-          }
+          "description": "The type of user (senior, guardian).",
+          "enum": ["senior", "guardian"]
         },
         "phone": {
           "type": "string",
@@ -34,29 +31,14 @@
         "lastName": {
           "type": "string",
           "description": "User's last name."
-        },
-        "emergencyContactName": {
-          "type": "string",
-          "description": "Name of the emergency contact."
-        },
-        "emergencyContactPhone": {
-          "type": "string",
-          "description": "Phone number of the emergency contact."
-        },
-        "healthPreferences": {
-          "type": "string",
-          "description": "User's health preferences and privacy controls."
-        },
-        "seniorSkills": {
-          "type": "string",
-          "description": "Skills and job profile for senior users."
         }
       },
       "required": [
         "id",
         "userType",
         "firstName",
-        "lastName"
+        "lastName",
+        "email"
       ]
     },
     "MoodCheckin": {
@@ -254,7 +236,7 @@
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "google.com"
     ]
   },
   "firestore": {

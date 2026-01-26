@@ -21,13 +21,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Home, Image, Stethoscope, Users, Briefcase, LogOut } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { SOSButton } from '../features/sos-button';
 import Link from 'next/link';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-
-const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '../ui/skeleton';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -39,6 +40,25 @@ const navItems = [
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
+      router.push('/');
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Logout Failed', description: 'Could not log you out. Please try again.' });
+    }
+  };
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  }
 
   return (
     <>
@@ -76,20 +96,25 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
-                <Avatar>
-                  {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User Avatar" data-ai-hint={userAvatar.imageHint} />}
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
+                 {isUserLoading ? (
+                  <Skeleton className="h-full w-full rounded-full" />
+                ) : (
+                  <Avatar>
+                    <AvatarImage src={user?.photoURL ?? undefined} alt="User Avatar" />
+                    <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+                  </Avatar>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{user?.displayName || user?.email || 'My Account'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/"><LogOut className="mr-2 h-4 w-4" />Logout</Link>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
