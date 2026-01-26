@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { createUserProfile } from '@/lib/user-actions';
 import { Loader2 } from 'lucide-react';
 
@@ -31,6 +31,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function SignupPage() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -51,7 +52,7 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
       
-      await createUserProfile(user, {
+      await createUserProfile(firestore, user, {
         firstName: values.firstName,
         lastName: values.lastName,
         userType: values.role,

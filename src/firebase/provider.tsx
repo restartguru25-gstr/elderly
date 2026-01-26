@@ -89,7 +89,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             // This is likely a first-time social login
             try {
               const [firstName, ...lastName] = (firebaseUser.displayName || '').split(' ');
-              await createUserProfile(firebaseUser, {
+              await createUserProfile(firestore, firebaseUser, {
                 firstName: firstName || 'New',
                 lastName: lastName.join(' ') || 'User',
                 userType: 'guardian', // Default role for social sign-ins

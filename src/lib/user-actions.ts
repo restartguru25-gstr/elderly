@@ -1,11 +1,7 @@
-'use server';
+'use client';
 
-import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, Firestore } from 'firebase/firestore';
 import { User } from 'firebase/auth';
-import { initializeFirebase } from '@/firebase/init';
-
-// NOTE: This is a server-side action.
-// We initialize a server-side instance of Firebase to interact with Firestore.
 
 export type UserProfileAddon = {
   firstName: string;
@@ -16,14 +12,15 @@ export type UserProfileAddon = {
 
 /**
  * Creates a user profile document in Firestore.
+ * @param firestore The Firestore instance.
  * @param user The Firebase Auth User object.
  * @param additionalData Additional data for the user profile.
  */
-export async function createUserProfile(user: User, additionalData: UserProfileAddon) {
-  // We need to get a Firestore instance here.
-  // This function runs on the server, so we initialize a new instance.
-  const { firestore } = initializeFirebase();
-  
+export async function createUserProfile(
+  firestore: Firestore,
+  user: User,
+  additionalData: UserProfileAddon
+) {
   if (!user) throw new Error('User object is required to create a profile.');
 
   const userRef = doc(firestore, 'users', user.uid);
