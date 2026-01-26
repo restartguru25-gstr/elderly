@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -23,6 +24,7 @@ export function SOSButton() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isAlertOpen, setIsAlertOpen] = React.useState(false);
 
   const handleConfirm = () => {
     if (!user) {
@@ -33,24 +35,19 @@ export function SOSButton() {
     setIsLoading(true);
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const { latitude, longitude } = position.coords;
-        try {
-          await createEmergencyAlert(firestore, user.uid, { latitude, longitude });
-          toast({
-            title: 'SOS Alert Sent!',
-            description: 'Your emergency contacts have been notified with your location.',
+        createEmergencyAlert(firestore, user.uid, { latitude, longitude })
+          .then(() => {
+            toast({
+              title: 'SOS Alert Sent!',
+              description: 'Your emergency contacts have been notified with your location.',
+            });
+            setIsAlertOpen(false);
+          })
+          .finally(() => {
+            setIsLoading(false);
           });
-        } catch (error: any) {
-          console.error('SOS Error:', error);
-          toast({
-            variant: 'destructive',
-            title: 'SOS Failed',
-            description: error.message || 'Could not send the alert. Please try again.',
-          });
-        } finally {
-          setIsLoading(false);
-        }
       },
       (error) => {
         console.error('Geolocation Error:', error);
@@ -67,7 +64,7 @@ export function SOSButton() {
 
 
   return (
-    <AlertDialog>
+    <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="default" className="flex items-center gap-2 rounded-full animate-pulse">
           <Siren className="h-5 w-5" />
@@ -82,7 +79,7 @@ export function SOSButton() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleConfirm} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Confirm & Send Alert

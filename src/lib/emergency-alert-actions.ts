@@ -1,6 +1,9 @@
+
 'use client';
 
-import { addDoc, collection, serverTimestamp, Firestore } from 'firebase/firestore';
+import { collection, serverTimestamp, Firestore } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase';
+
 
 type Location = {
   latitude: number;
@@ -13,7 +16,7 @@ type Location = {
  * @param userId The user's ID.
  * @param location The user's location.
  */
-export async function createEmergencyAlert(
+export function createEmergencyAlert(
   firestore: Firestore,
   userId: string,
   location: Location
@@ -29,11 +32,5 @@ export async function createEmergencyAlert(
     status: 'pending',
   };
 
-  try {
-    await addDoc(alertsCollectionRef, alertData);
-    console.log('Emergency alert created successfully for user:', userId);
-  } catch (error) {
-    console.error('Error creating emergency alert:', error);
-    throw new Error('Failed to send emergency alert.');
-  }
+  return addDocumentNonBlocking(alertsCollectionRef, alertData);
 }

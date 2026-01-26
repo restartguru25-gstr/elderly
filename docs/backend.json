@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -13,7 +14,10 @@
         "userType": {
           "type": "string",
           "description": "The type of user (senior, guardian).",
-          "enum": ["senior", "guardian"]
+          "enum": [
+            "senior",
+            "guardian"
+          ]
         },
         "phone": {
           "type": "string",
@@ -71,7 +75,9 @@
         "status": {
           "type": "string",
           "description": "Status of the check-in.",
-          "enum": ["ok"]
+          "enum": [
+            "ok"
+          ]
         }
       },
       "required": [
@@ -271,6 +277,109 @@
         "medication",
         "dosage"
       ]
+    },
+    "Vitals": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vitals",
+      "type": "object",
+      "description": "Represents a single vital sign reading for a user.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "blood_pressure",
+            "blood_sugar",
+            "spo2",
+            "weight"
+          ]
+        },
+        "value": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "type",
+        "value",
+        "timestamp"
+      ]
+    },
+    "Medication": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Medication",
+      "type": "object",
+      "description": "Represents a medication for a user.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "dosage": {
+          "type": "string"
+        },
+        "schedule": {
+          "type": "string",
+          "description": "e.g., 'Morning, Afternoon, Night'"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "dosage",
+        "schedule"
+      ]
+    },
+    "MedicationLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MedicationLog",
+      "type": "object",
+      "description": "Represents a log of when a medication was taken.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "medicationId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "taken": {
+          "type": "boolean"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "medicationId",
+        "userId",
+        "taken",
+        "timestamp"
+      ]
     }
   },
   "auth": {
@@ -409,6 +518,66 @@
             {
               "name": "prescriptionId",
               "description": "The unique ID of the prescription."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/vitals/{vitalId}",
+        "definition": {
+          "entityName": "Vitals",
+          "schema": {
+            "$ref": "#/backend/entities/Vitals"
+          },
+          "description": "Stores vital sign readings for a user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth ID of the user."
+            },
+            {
+              "name": "vitalId",
+              "description": "The unique ID of the vital reading."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/medications/{medicationId}",
+        "definition": {
+          "entityName": "Medication",
+          "schema": {
+            "$ref": "#/backend/entities/Medication"
+          },
+          "description": "Stores medication schedules for a user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth ID of the user."
+            },
+            {
+              "name": "medicationId",
+              "description": "The unique ID of the medication."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/medication_logs/{medicationLogId}",
+        "definition": {
+          "entityName": "MedicationLog",
+          "schema": {
+            "$ref": "#/backend/entities/MedicationLog"
+          },
+          "description": "Stores logs of when a medication was taken by a user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth ID of the user."
+            },
+            {
+              "name": "medicationLogId",
+              "description": "The unique ID of the medication log."
             }
           ]
         }

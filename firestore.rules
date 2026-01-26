@@ -1,3 +1,4 @@
+
 /**
  * This ruleset defines the security model for the ElderLink application.
  *
@@ -16,7 +17,7 @@
  *
  * Key Security Decisions:
  * - User-Owned Data: Access to user subcollections (moodCheckins, emergencyAlerts,
- *   telemedicineAppointments, prescriptions) is strictly limited to the user
+ *   telemedicineAppointments, prescriptions, vitals, medications, medication_logs) is strictly limited to the user
  *   identified in the path. This prevents any user from accessing another's private data.
  * - Public User Profiles: User profile documents in the top-level `/users`
  *   collection are publicly readable by anyone, including unauthenticated users, to
@@ -151,10 +152,8 @@ service cloud.firestore {
      * @principle Restricts all access to the user's own data tree.
      */
     match /users/{userId}/telemedicineAppointments/{telemedicineAppointmentId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+      allow get, list, create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
     }
 
     /**
@@ -172,6 +171,37 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId) && request.resource.data.patientId == resource.data.patientId;
       allow delete: if isExistingOwner(userId);
     }
+    
+    /**
+     * @description Manages a user's private vitals readings.
+     * @path /users/{userId}/vitals/{vitalId}
+     * @principle Restricts all access to the user's own data tree.
+     */
+    match /users/{userId}/vitals/{vitalId} {
+      allow get, list, create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
+    }
+    
+    /**
+     * @description Manages a user's private medication schedules.
+     * @path /users/{userId}/medications/{medicationId}
+     * @principle Restricts all access to the user's own data tree.
+     */
+    match /users/{userId}/medications/{medicationId} {
+      allow get, list, create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
+    }
+    
+    /**
+     * @description Manages a user's private medication logs.
+     * @path /users/{userId}/medication_logs/{medicationLogId}
+     * @principle Restricts all access to the user's own data tree.
+     */
+    match /users/{userId}/medication_logs/{medicationLogId} {
+      allow get, list, create, update: if isOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
 
     /**
      * @description Manages shared community forums. Signed-in users can read forums.

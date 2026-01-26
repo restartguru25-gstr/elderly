@@ -1,10 +1,75 @@
+
+'use client';
+
+import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { doctors } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Search } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
+import { useFirestore, useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { createAppointment } from '@/lib/telemedicine-actions';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
+type Doctor = (typeof doctors)[0];
+
+function BookAppointmentButton({ doctor }: { doctor: Doctor }) {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+
+  const handleBooking = () => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Not Logged In', description: 'You must be logged in to book an appointment.' });
+      return;
+    }
+    setIsLoading(true);
+
+    createAppointment(firestore, user.uid, {
+      doctorId: doctor.id,
+      doctorName: doctor.name,
+      specialty: doctor.specialty,
+    })
+      .then(() => {
+        toast({
+          title: 'Appointment Booked!',
+          description: `Your appointment with ${doctor.name} has been confirmed.`,
+        });
+        setIsAlertOpen(false);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  return (
+    <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+      <AlertDialogTrigger asChild>
+        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">Book Appointment</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm Appointment</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to book an appointment with {doctor.name} ({doctor.specialty})?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleBooking} disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Confirm
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 export default function TelemedicinePage() {
   return (
@@ -35,7 +100,7 @@ export default function TelemedicinePage() {
                 <CardDescription>{doctor.specialty}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow flex items-end justify-center">
-                <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">Book Appointment</Button>
+                <BookAppointmentButton doctor={doctor} />
               </CardContent>
             </Card>
           );

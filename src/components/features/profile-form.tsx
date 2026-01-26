@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,24 +58,20 @@ export function ProfileForm() {
     }
   }, [userProfile, form]);
 
-  async function onSubmit(data: ProfileFormValues) {
+  function onSubmit(data: ProfileFormValues) {
     if (!user) return;
     setIsSaving(true);
-    try {
-      await updateUserProfile(firestore, user.uid, data);
-      toast({
-        title: 'Profile Updated',
-        description: 'Your information has been saved successfully.',
+    
+    updateUserProfile(firestore, user.uid, data)
+      .then(() => {
+        toast({
+          title: 'Profile Updated',
+          description: 'Your information has been saved successfully.',
+        });
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Could not save your profile. Please try again.',
-      });
-    } finally {
-      setIsSaving(false);
-    }
   }
 
   if (isUserLoading || isProfileLoading) {

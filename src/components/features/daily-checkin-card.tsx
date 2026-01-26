@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -35,24 +36,20 @@ export function DailyCheckinCard() {
 
   const hasCheckedInToday = useMemo(() => (checkins ? checkins.length > 0 : false), [checkins]);
 
-  const handleCheckin = async () => {
+  const handleCheckin = () => {
     if (!user) return;
     setIsCheckingIn(true);
-    try {
-      await createDailyCheckin(firestore, user.uid);
-      toast({
-        title: 'Checked In!',
-        description: "Great to know you're doing well today.",
+    
+    createDailyCheckin(firestore, user.uid)
+      .then(() => {
+        toast({
+          title: 'Checked In!',
+          description: "Great to know you're doing well today.",
+        });
+      })
+      .finally(() => {
+        setIsCheckingIn(false);
       });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Could not complete check-in.',
-      });
-    } finally {
-      setIsCheckingIn(false);
-    }
   };
 
   if (isUserLoading || isCheckinLoading) {

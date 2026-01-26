@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -20,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, Briefcase, LogOut, User } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, Briefcase, LogOut, User, Pill, HeartPulse } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { SOSButton } from '../features/sos-button';
@@ -35,6 +36,8 @@ const navItems = [
   { href: '/dashboard/profile', icon: User, label: 'Profile' },
   { href: '/dashboard/memory-lane', icon: Image, label: 'Memory Lane' },
   { href: '/dashboard/telemedicine', icon: Stethoscope, label: 'Telemedicine' },
+  { href: '/dashboard/medications', icon: Pill, label: 'Medications' },
+  { href: '/dashboard/vitals', icon: HeartPulse, label: 'Vitals' },
   { href: '/dashboard/community', icon: Users, label: 'Community' },
   { href: '/dashboard/skills-marketplace', icon: Briefcase, label: 'Skills Marketplace' },
 ];
@@ -73,7 +76,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
                   tooltip={{
                     children: item.label,
                     className: 'bg-primary text-primary-foreground'

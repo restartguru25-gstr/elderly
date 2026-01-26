@@ -1,15 +1,17 @@
+
 'use client';
 
-import { doc, setDoc, serverTimestamp, Firestore } from 'firebase/firestore';
+import { doc, serverTimestamp, Firestore } from 'firebase/firestore';
 import { User } from 'firebase/auth';
+import { setDocumentNonBlocking } from '@/firebase';
 
 export type UserProfileAddon = {
   firstName: string;
-  lastName: string;
+  lastName:string;
   userType: 'senior' | 'guardian';
-  phone: string | null;
-  emergencyContacts: string;
-  healthConditions: string;
+  phone?: string | null;
+  emergencyContacts?: string;
+  healthConditions?: string;
 }
 
 /**
@@ -18,7 +20,7 @@ export type UserProfileAddon = {
  * @param user The Firebase Auth User object.
  * @param additionalData Additional data for the user profile.
  */
-export async function createUserProfile(
+export function createUserProfile(
   firestore: Firestore,
   user: User,
   additionalData: UserProfileAddon
@@ -34,19 +36,13 @@ export async function createUserProfile(
     lastName: additionalData.lastName,
     userType: additionalData.userType,
     phone: additionalData.phone || user.phoneNumber || '',
-    emergencyContacts: additionalData.emergencyContacts,
-    healthConditions: additionalData.healthConditions,
+    emergencyContacts: additionalData.emergencyContacts || '',
+    healthConditions: additionalData.healthConditions || '',
     createdAt: serverTimestamp(),
   };
 
-  try {
-    await setDoc(userRef, profileData);
-    console.log('User profile created successfully for user:', user.uid);
-  } catch (error) {
-    console.error('Error creating user profile:', error);
-    // Re-throw the error to be caught by the calling function
-    throw new Error('Failed to create user profile in database.');
-  }
+  // Do not await, let the auth provider handle optimistic updates
+  return setDocumentNonBlocking(userRef, profileData, { merge: false });
 }
 
 /**
@@ -55,7 +51,7 @@ export async function createUserProfile(
  * @param userId The user's ID.
  * @param data The data to update.
  */
-export async function updateUserProfile(
+export function updateUserProfile(
   firestore: Firestore,
   userId: string,
   data: Partial<UserProfileAddon>
@@ -63,13 +59,5 @@ export async function updateUserProfile(
   if (!userId) throw new Error('User ID is required to update a profile.');
   const userRef = doc(firestore, 'users', userId);
 
-  try {
-    // Using setDoc with merge: true is equivalent to an update,
-    // but it can also create the document if it doesn't exist.
-    await setDoc(userRef, data, { merge: true });
-    console.log('User profile updated successfully for user:', userId);
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-    throw new Error('Failed to update user profile in database.');
-  }
+  return setDocumentNonBlocking(userRef, data, { merge: true });
 }

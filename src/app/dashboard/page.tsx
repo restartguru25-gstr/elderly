@@ -1,13 +1,16 @@
+
 import { DailyCheckinCard } from '@/components/features/daily-checkin-card';
 import { MoodTracker } from '@/components/features/mood-tracker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpRight, Image, Stethoscope, Users, Briefcase } from 'lucide-react';
+import { ArrowUpRight, Image, Stethoscope, Users, Briefcase, Pill, HeartPulse } from 'lucide-react';
 import Link from 'next/link';
 
 const quickLinks = [
   { href: '/dashboard/memory-lane', icon: Image, label: 'Memory Lane', description: 'Rediscover cherished moments.' },
   { href: '/dashboard/telemedicine', icon: Stethoscope, label: 'Telemedicine', description: 'Consult with trusted doctors.' },
+  { href: '/dashboard/medications', icon: Pill, label: 'Medications', description: 'Manage medication schedules.' },
+  { href: '/dashboard/vitals', icon: HeartPulse, label: 'Vitals', description: 'Track important health metrics.' },
   { href: '/dashboard/community', icon: Users, label: 'Community', description: 'Connect with friends & peers.' },
   { href: '/dashboard/skills-marketplace', icon: Briefcase, label: 'Skills Marketplace', description: 'Share your expertise.' },
 ]
@@ -25,7 +28,7 @@ export default function DashboardPage() {
         
         <DailyCheckinCard />
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {quickLinks.map(link => (
             <Card key={link.label} className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
