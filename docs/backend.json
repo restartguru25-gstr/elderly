@@ -268,30 +268,43 @@
         },
         "doctorId": {
           "type": "string",
-          "description": "Reference to UserProfile (as service provider). (Relationship: UserProfile 1:N TelemedicineAppointment)"
+          "description": "Reference to a doctor's profile or ID."
+        },
+        "doctorName": {
+            "type": "string",
+            "description": "Denormalized name of the doctor for easy display."
+        },
+        "specialty": {
+            "type": "string",
+            "description": "Denormalized specialty of the doctor."
         },
         "appointmentTime": {
           "type": "string",
           "description": "Date and time of the appointment.",
           "format": "date-time"
         },
+        "status": {
+            "type": "string",
+            "description": "Status of the appointment (e.g., booked, completed, cancelled).",
+            "enum": ["booked", "completed", "cancelled"]
+        },
         "notes": {
           "type": "string",
           "description": "Notes or reason for the appointment."
         },
-        "prescriptionIds": {
-          "type": "array",
-          "description": "References to Prescriptions. (Relationship: Prescription 1:N TelemedicineAppointment)",
-          "items": {
-            "type": "string"
-          }
+        "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the appointment was booked.",
+            "format": "date-time"
         }
       },
       "required": [
-        "id",
         "userId",
         "doctorId",
-        "appointmentTime"
+        "doctorName",
+        "specialty",
+        "appointmentTime",
+        "status"
       ]
     },
     "Prescription": {
