@@ -57,6 +57,8 @@ export default function SignupPage() {
         lastName: values.lastName,
         userType: values.role,
         phone: user.phoneNumber, // This might be null
+        emergencyContacts: '',
+        healthConditions: ''
       });
 
       toast({

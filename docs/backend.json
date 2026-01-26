@@ -31,6 +31,14 @@
         "lastName": {
           "type": "string",
           "description": "User's last name."
+        },
+        "emergencyContacts": {
+          "type": "string",
+          "description": "Comma-separated list of emergency contacts (name, phone, relationship)."
+        },
+        "healthConditions": {
+          "type": "string",
+          "description": "Notes on pre-existing health conditions."
         }
       },
       "required": [
@@ -39,6 +47,38 @@
         "firstName",
         "lastName",
         "email"
+      ]
+    },
+    "DailyCheckin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DailyCheckin",
+      "type": "object",
+      "description": "Represents a daily check-in entry for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the check-in."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Date and time of the check-in.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the check-in.",
+          "enum": ["ok"]
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "status"
       ]
     },
     "MoodCheckin": {
@@ -253,6 +293,26 @@
             {
               "name": "userId",
               "description": "The unique Firebase Auth ID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/daily_checkins/{dailyCheckinId}",
+        "definition": {
+          "entityName": "DailyCheckin",
+          "schema": {
+            "$ref": "#/backend/entities/DailyCheckin"
+          },
+          "description": "Stores daily check-in entries for each user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth ID of the user."
+            },
+            {
+              "name": "dailyCheckinId",
+              "description": "The unique ID of the daily check-in entry."
             }
           ]
         }

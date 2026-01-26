@@ -1,3 +1,4 @@
+import { DailyCheckinCard } from '@/components/features/daily-checkin-card';
 import { MoodTracker } from '@/components/features/mood-tracker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,12 +15,16 @@ const quickLinks = [
 export default function DashboardPage() {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      <div className="lg:col-span-2">
-        <h1 className="mb-4 text-3xl font-bold text-foreground">
-          Hello, Welcome Back!
-        </h1>
-        <p className="mb-8 text-muted-foreground">Here&apos;s a summary of your loved one&apos;s well-being and activities.</p>
+      <div className="lg:col-span-2 space-y-8">
+        <div>
+          <h1 className="mb-4 text-3xl font-bold text-foreground">
+            Hello, Welcome Back!
+          </h1>
+          <p className="mb-8 text-muted-foreground">Here&apos;s a summary of your loved one&apos;s well-being and activities.</p>
+        </div>
         
+        <DailyCheckinCard />
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {quickLinks.map(link => (
             <Card key={link.label} className="hover:shadow-lg transition-shadow">

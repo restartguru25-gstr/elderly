@@ -120,6 +120,16 @@ service cloud.firestore {
     }
 
     /**
+     * @description Manages a user's private daily check-in entries.
+     * @path /users/{userId}/daily_checkins/{checkinId}
+     * @principle Restricts all access to the user's own data tree.
+     */
+    match /users/{userId}/daily_checkins/{checkinId} {
+      allow get, list, create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
+    }
+
+    /**
      * @description Manages a user's private emergency alerts.
      * @path /users/{userId}/emergencyAlerts/{emergencyAlertId}
      * @allow (create) A user creates a new emergency alert for themselves.

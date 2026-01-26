@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, Briefcase, LogOut } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, Briefcase, LogOut, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { SOSButton } from '../features/sos-button';
@@ -32,6 +32,7 @@ import { Skeleton } from '../ui/skeleton';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
+  { href: '/dashboard/profile', icon: User, label: 'Profile' },
   { href: '/dashboard/memory-lane', icon: Image, label: 'Memory Lane' },
   { href: '/dashboard/telemedicine', icon: Stethoscope, label: 'Telemedicine' },
   { href: '/dashboard/community', icon: Users, label: 'Community' },
@@ -109,7 +110,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{user?.displayName || user?.email || 'My Account'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/profile">Settings</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>

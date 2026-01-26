@@ -8,6 +8,8 @@ export type UserProfileAddon = {
   lastName: string;
   userType: 'senior' | 'guardian';
   phone: string | null;
+  emergencyContacts: string;
+  healthConditions: string;
 }
 
 /**
@@ -32,6 +34,8 @@ export async function createUserProfile(
     lastName: additionalData.lastName,
     userType: additionalData.userType,
     phone: additionalData.phone || user.phoneNumber || '',
+    emergencyContacts: additionalData.emergencyContacts,
+    healthConditions: additionalData.healthConditions,
     createdAt: serverTimestamp(),
   };
 
@@ -42,5 +46,30 @@ export async function createUserProfile(
     console.error('Error creating user profile:', error);
     // Re-throw the error to be caught by the calling function
     throw new Error('Failed to create user profile in database.');
+  }
+}
+
+/**
+ * Updates a user profile document in Firestore.
+ * @param firestore The Firestore instance.
+ * @param userId The user's ID.
+ * @param data The data to update.
+ */
+export async function updateUserProfile(
+  firestore: Firestore,
+  userId: string,
+  data: Partial<UserProfileAddon>
+) {
+  if (!userId) throw new Error('User ID is required to update a profile.');
+  const userRef = doc(firestore, 'users', userId);
+
+  try {
+    // Using setDoc with merge: true is equivalent to an update,
+    // but it can also create the document if it doesn't exist.
+    await setDoc(userRef, data, { merge: true });
+    console.log('User profile updated successfully for user:', userId);
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    throw new Error('Failed to update user profile in database.');
   }
 }

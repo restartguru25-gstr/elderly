@@ -12,9 +12,60 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Siren } from 'lucide-react';
+import { useFirestore, useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { createEmergencyAlert } from '@/lib/emergency-alert-actions';
+import { Loader2, Siren } from 'lucide-react';
+import React from 'react';
 
 export function SOSButton() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  const handleConfirm = () => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Not Logged In', description: 'You must be logged in to send an SOS alert.' });
+      return;
+    }
+
+    setIsLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          await createEmergencyAlert(firestore, user.uid, { latitude, longitude });
+          toast({
+            title: 'SOS Alert Sent!',
+            description: 'Your emergency contacts have been notified with your location.',
+          });
+        } catch (error: any) {
+          console.error('SOS Error:', error);
+          toast({
+            variant: 'destructive',
+            title: 'SOS Failed',
+            description: error.message || 'Could not send the alert. Please try again.',
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      (error) => {
+        console.error('Geolocation Error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Location Error',
+          description: 'Could not get your location. Please enable location services.',
+        });
+        setIsLoading(false);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -32,7 +83,10 @@ export function SOSButton() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Confirm & Send Alert</AlertDialogAction>
+          <AlertDialogAction onClick={handleConfirm} disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Confirm & Send Alert
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
