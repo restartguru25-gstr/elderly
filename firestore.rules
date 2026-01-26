@@ -84,6 +84,13 @@ service cloud.firestore {
     function isExistingMember() {
       return resource != null && isMember();
     }
+    
+    /**
+     * Checks if a user is a member of a chat by reading the parent chat document.
+     */
+    function isChatMember(chatId) {
+      return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberIds;
+    }
 
 
     // ----------------------------------------------------------------------
@@ -245,6 +252,27 @@ service cloud.firestore {
       allow get, list: if isSignedIn();
       allow create: if isOwner(request.resource.data.authorId);
       allow update, delete: if isExistingOwner(resource.data.authorId);
+    }
+    
+    /**
+     * @description Manages chat conversations.
+     * @path /chats/{chatId}
+     * @principle Access is restricted to members of the chat.
+     */
+    match /chats/{chatId} {
+      allow get, update: if isChatMember(chatId);
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.memberIds;
+      
+      /**
+       * @description Manages messages within a chat.
+       * @path /chats/{chatId}/messages/{messageId}
+       * @principle Inherits access from the parent chat. Only members can read/write.
+       */
+      match /messages/{messageId} {
+        allow get, list: if isChatMember(chatId);
+        allow create: if isChatMember(chatId) && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if false; // Messages are immutable
+      }
     }
   }
 }

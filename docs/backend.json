@@ -476,6 +476,39 @@
         "fileType",
         "createdAt"
       ]
+    },
+    "Chat": {
+      "title": "Chat",
+      "type": "object",
+      "description": "Represents a one-to-one or group conversation.",
+      "properties": {
+        "id": { "type": "string" },
+        "memberIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Array of UserProfile UIDs who are part of the chat."
+        },
+        "lastMessageText": { "type": "string" },
+        "lastMessageTimestamp": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["memberIds", "createdBy", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a single message within a chat.",
+      "properties": {
+        "id": { "type": "string" },
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "voiceNoteUrl": { "type": "string", "format": "uri" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["chatId", "senderId", "timestamp"]
     }
   },
   "auth": {
@@ -712,6 +745,22 @@
               "description": "The unique ID of the medical document metadata."
             }
           ]
+        }
+      },
+      {
+        "path": "/chats/{chatId}",
+        "definition": {
+          "entityName": "Chat",
+          "schema": { "$ref": "#/backend/entities/Chat" },
+          "description": "Stores metadata for each chat conversation. Access is controlled by memberIds."
+        }
+      },
+      {
+        "path": "/chats/{chatId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": { "$ref": "#/backend/entities/Message" },
+          "description": "Stores all messages for a given chat. Access is inherited from the parent chat."
         }
       }
     ],
