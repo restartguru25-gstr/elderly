@@ -292,6 +292,16 @@ service cloud.firestore {
         allow update, delete: if false; // Messages are immutable
       }
     }
+    
+    /**
+     * @description Manages user rewards (ElderCoins).
+     * @path /rewards/{userId}
+     * @principle Restricts all access to the owner of the rewards document.
+     */
+    match /rewards/{userId} {
+      allow get, create, update: if isOwner(userId);
+      allow delete: if false; // Rewards should not be deletable by users
+    }
   }
 }
 
