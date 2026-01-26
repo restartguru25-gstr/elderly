@@ -1,3 +1,88 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "user-avatar-1",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3Njk0MTMyMzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "doctor-avatar-1",
+      "description": "Doctor avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1730597842283-943c7986ee2c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjkzNTc1NDh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor portrait"
+    },
+    {
+      "id": "doctor-avatar-2",
+      "description": "Doctor avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxkb2N0b3IlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjkzNTc1NDh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "doctor portrait"
+    },
+    {
+      "id": "doctor-avatar-3",
+      "description": "Doctor avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx3b21hbiUyMGRvY3RvcnxlbnwwfHx8fDE3NjkzMjU1ODB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman doctor"
+    },
+    {
+      "id": "doctor-avatar-4",
+      "description": "Doctor avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1612943705904-e2e101abcd19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtYW4lMjBkb2N0b3J8ZW58MHx8fHwxNzY5NDUxNDAwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man doctor"
+    },
+    {
+      "id": "community-gardening",
+      "description": "Gardening group cover",
+      "imageUrl": "https://images.unsplash.com/photo-1687724581459-b67fb3d6f670?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxnYXJkZW5pbmclMjBmbG93ZXJzfGVufDB8fHx8MTc2OTQ1MTQwMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gardening flowers"
+    },
+    {
+      "id": "community-books",
+      "description": "Book club cover",
+      "imageUrl": "https://images.unsplash.com/photo-1614849963640-9cc74b2a826f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxib29rcyUyMGxpYnJhcnl8ZW58MHx8fHwxNzY5MzkzNDYzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "books library"
+    },
+    {
+      "id": "community-yoga",
+      "description": "Yoga group cover",
+      "imageUrl": "https://images.unsplash.com/photo-1641391400773-dcdd2f5ab7a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx5b2dhJTIwcGVhY2V8ZW58MHx8fHwxNzY5MzcxODM3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "yoga peace"
+    },
+    {
+      "id": "community-music",
+      "description": "Music group cover",
+      "imageUrl": "https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bXVzaWMlMjBpbnN0cnVtZW50c3xlbnwwfHx8fDE3Njk0NTE0MDB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "music instruments"
+    },
+    {
+      "id": "skill-tutoring",
+      "description": "Tutoring skill cover",
+      "imageUrl": "https://images.unsplash.com/photo-1758685734622-3e0a002b2f53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx0ZWFjaGluZyUyMGJsYWNrYm9hcmR8ZW58MHx8fHwxNzY5NDUxNDAwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "teaching blackboard"
+    },
+    {
+      "id": "skill-cooking",
+      "description": "Cooking skill cover",
+      "imageUrl": "https://images.unsplash.com/photo-1517244683847-7456b63c5969?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxpbmRpYW4lMjBmb29kfGVufDB8fHx8MTc2OTM1MTgyMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "indian food"
+    },
+    {
+      "id": "skill-consulting",
+      "description": "Consulting skill cover",
+      "imageUrl": "https://images.unsplash.com/39/lIZrwvbeRuuzqOoWJUEn_Photoaday_CSD%20%281%20of%201%29-5.jpg?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxidXNpbmVzcyUyMG1lZXRpbmd8ZW58MHx8fHwxNzY5NDEzMDczfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "business meeting"
+    },
+    {
+      "id": "skill-knitting",
+      "description": "Knitting skill cover",
+      "imageUrl": "https://images.unsplash.com/photo-1711097258176-c1a4bb511aa7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxrbml0dGluZyUyMHdvb2x8ZW58MHx8fHwxNzY5NDUxNDAwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "knitting wool"
+    },
+    {
+      "id": "old-photo-placeholder",
+      "description": "Placeholder for an old photograph",
+      "imageUrl": "https://images.unsplash.com/photo-1616782541155-9aafbfa7c97e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8b2xkJTIwcGhvdG9ncmFwaHxlbnwwfHx8fDE3Njk0MjAxODF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "old photograph"
+    }
+  ]
 }
