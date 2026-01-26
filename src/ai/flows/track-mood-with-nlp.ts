@@ -21,7 +21,7 @@ const TrackMoodWithNLPInputSchema = z.object({
     .number()
     .default(-0.5)
     .describe(
-      'The threshold for triggering a guardian notification.  If the current sentiment score drops below this value compared to the previous score, a notification should be sent.'
+      'The threshold for triggering a guardian notification.  If the current sentiment score is less than this value, a notification should be triggered.'
     ),
 });
 export type TrackMoodWithNLPInput = z.infer<typeof TrackMoodWithNLPInputSchema>;
@@ -31,7 +31,7 @@ const TrackMoodWithNLPOutputSchema = z.object({
   notifyGuardian: z
     .boolean()
     .describe(
-      'A boolean indicating whether the guardian should be notified based on a significant negative shift in sentiment.'
+      'A boolean indicating whether the guardian should be notified based on a significant negative sentiment score.'
     ),
 });
 export type TrackMoodWithNLPOutput = z.infer<typeof TrackMoodWithNLPOutputSchema>;
@@ -48,10 +48,9 @@ const prompt = ai.definePrompt({
 
 You will receive the mood check-in text. Analyze the sentiment and provide a sentiment score between -1.0 (very negative) and 1.0 (very positive).
 
-Then, determine if the guardian should be notified based on the provided threshold and previous score. If the current sentiment score drops below the guardian notification threshold compared to the previous sentiment score, set notifyGuardian to true. If there is no previous sentiment score, do not notify the guardian.
+Then, determine if the guardian should be notified. The guardian should be notified if the new sentimentScore is less than the provided 'guardianNotificationThreshold'. Set 'notifyGuardian' to true if a notification should be sent, otherwise set it to false.
 
 Mood Check-in Text: {{{moodCheckIn}}}
-Previous Sentiment Score: {{#if previousSentimentScore}}{{{previousSentimentScore}}}{{else}}N/A{{/if}}
 Guardian Notification Threshold: {{{guardianNotificationThreshold}}}`,
 });
 
@@ -63,10 +62,10 @@ const trackMoodWithNLPFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    const notifyGuardian = input.previousSentimentScore !== undefined && output!.sentimentScore - input.previousSentimentScore < input.guardianNotificationThreshold;
-    return {
-      sentimentScore: output!.sentimentScore,
-      notifyGuardian,
-    };
+    if (!output) {
+      throw new Error('The AI model did not return a valid analysis.');
+    }
+    // The model is responsible for all logic, including the notification decision.
+    return output;
   }
 );

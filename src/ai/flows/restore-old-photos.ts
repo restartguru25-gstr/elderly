@@ -15,7 +15,7 @@ const RestoreOldPhotoInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
-      'A photo to be restored, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.' // Corrected typo here
+      "A photo to be restored, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
 
@@ -37,17 +37,6 @@ export async function restoreOldPhoto(
   return restoreOldPhotoFlow(input);
 }
 
-const restoreOldPhotoPrompt = ai.definePrompt({
-  name: 'restoreOldPhotoPrompt',
-  input: {schema: RestoreOldPhotoInputSchema},
-  output: {schema: RestoreOldPhotoOutputSchema},
-  prompt: `You are an AI image restoration expert.  You will take an old, damaged photo and restore it, returning the restored photo as a data URI.
-
-Original Photo: {{media url=photoDataUri}}
-
-Restored Photo:`, // Added Handlebars syntax to reference photoDataUri
-});
-
 const restoreOldPhotoFlow = ai.defineFlow(
   {
     name: 'restoreOldPhotoFlow',
@@ -59,13 +48,17 @@ const restoreOldPhotoFlow = ai.defineFlow(
       model: 'googleai/gemini-2.5-flash-image-preview',
       prompt: [
         {media: {url: input.photoDataUri}},
-        {text: 'Restore this old photo.'},
+        {text: 'Restore this old photo, improving clarity, fixing damage, and enhancing colors.'},
       ],
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },
     });
 
-    return {restoredPhotoDataUri: media.url!};
+    if (!media?.url) {
+      throw new Error("The AI model did not return a restored image.");
+    }
+
+    return {restoredPhotoDataUri: media.url};
   }
 );
