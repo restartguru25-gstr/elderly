@@ -43,6 +43,24 @@
         "healthConditions": {
           "type": "string",
           "description": "Notes on pre-existing health conditions."
+        },
+        "language": {
+            "type": "string",
+            "description": "User's preferred language for the app."
+        },
+        "permissions": {
+            "type": "object",
+            "description": "User's privacy settings.",
+            "properties": {
+                "vitals": {
+                    "type": "boolean",
+                    "description": "Permission to share vitals data with guardian."
+                },
+                "location": {
+                    "type": "boolean",
+                    "description": "Permission to share location data with guardian."
+                }
+            }
         }
       },
       "required": [

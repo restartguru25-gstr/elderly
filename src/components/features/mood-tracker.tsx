@@ -1,3 +1,4 @@
+
 'use client';
 
 import { trackMoodWithNLP } from '@/ai/flows/track-mood-with-nlp';
@@ -11,6 +12,8 @@ import { Smile, Frown, Meh, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useFirestore, useUser } from '@/firebase';
+import { createMoodCheckin } from '@/lib/mood-actions';
 
 const formSchema = z.object({
   moodCheckIn: z.string().min(10, 'Please share a little more about your feelings.').max(500),
@@ -22,6 +25,8 @@ export function MoodTracker() {
   const [analysis, setAnalysis] = useState<{ score: number; notified: boolean } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const { user } = useUser();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -31,11 +36,26 @@ export function MoodTracker() {
   });
 
   async function onSubmit(values: FormValues) {
+    if (!user) {
+        toast({
+            title: 'Not Logged In',
+            description: 'You must be logged in to track your mood.',
+            variant: 'destructive',
+        });
+        return;
+    }
     setIsLoading(true);
     setAnalysis(null);
     try {
       const result = await trackMoodWithNLP({ moodCheckIn: values.moodCheckIn });
+      
+      await createMoodCheckin(firestore, user.uid, {
+        notes: values.moodCheckIn,
+        moodScore: result.sentimentScore,
+      });
+
       setAnalysis({ score: result.sentimentScore, notified: result.notifyGuardian });
+
       if (result.notifyGuardian) {
         toast({
           title: 'Guardian Notified',
@@ -57,6 +77,7 @@ export function MoodTracker() {
       });
     } finally {
       setIsLoading(false);
+      form.reset();
     }
   }
   

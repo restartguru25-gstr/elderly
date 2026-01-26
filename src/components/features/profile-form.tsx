@@ -15,13 +15,21 @@ import { Skeleton } from '../ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/lib/user-actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Switch } from '../ui/switch';
+import { Separator } from '../ui/separator';
 
 const profileFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required.'),
   lastName: z.string().min(1, 'Last name is required.'),
   phone: z.string().optional(),
+  language: z.string().optional(),
   emergencyContacts: z.string().optional(),
   healthConditions: z.string().optional(),
+  permissions: z.object({
+    vitals: z.boolean().default(true),
+    location: z.boolean().default(true),
+  }).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -41,8 +49,13 @@ export function ProfileForm() {
       firstName: '',
       lastName: '',
       phone: '',
+      language: 'en',
       emergencyContacts: '',
       healthConditions: '',
+      permissions: {
+        vitals: true,
+        location: true,
+      }
     },
   });
 
@@ -52,8 +65,10 @@ export function ProfileForm() {
         firstName: userProfile.firstName || '',
         lastName: userProfile.lastName || '',
         phone: userProfile.phone || '',
+        language: userProfile.language || 'en',
         emergencyContacts: userProfile.emergencyContacts || '',
         healthConditions: userProfile.healthConditions || '',
+        permissions: userProfile.permissions || { vitals: true, location: true },
       });
     }
   }, [userProfile, form]);
@@ -76,15 +91,37 @@ export function ProfileForm() {
 
   if (isUserLoading || isProfileLoading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+      <div className="space-y-8">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
         </div>
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-10 w-24" />
+        <Skeleton className="h-px w-full" />
+         <div className="space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+         </div>
+         <Skeleton className="h-px w-full" />
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-1/2" />
+            <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                    <Skeleton className="h-6 w-10 rounded-full" />
+                    <Skeleton className="h-6 w-3/4" />
+                </div>
+                 <div className="flex items-center space-x-4">
+                    <Skeleton className="h-6 w-10 rounded-full" />
+                    <Skeleton className="h-6 w-3/4" />
+                </div>
+            </div>
+         </div>
+
+
+        <Skeleton className="h-10 w-24 mt-4" />
       </div>
     );
   }
@@ -133,6 +170,34 @@ export function ProfileForm() {
                 </FormItem>
             )}
         />
+         <FormField
+            control={form.control}
+            name="language"
+            render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preferred Language</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a language" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="hi">Hindi</SelectItem>
+                      <SelectItem value="bn">Bengali</SelectItem>
+                      <SelectItem value="te">Telugu</SelectItem>
+                      <SelectItem value="mr">Marathi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>This will be used for notifications and in-app text.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+            )}
+        />
+
+        <Separator />
+
         <FormField
           control={form.control}
           name="emergencyContacts"
@@ -173,6 +238,56 @@ export function ProfileForm() {
             </FormItem>
           )}
         />
+
+        <Separator />
+        
+        <div>
+            <h3 className="mb-4 text-lg font-medium">Privacy Controls</h3>
+            <div className="space-y-4">
+                 <FormField
+                    control={form.control}
+                    name="permissions.vitals"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <FormLabel className="text-base">Share Vitals Data</FormLabel>
+                            <FormDescription>
+                            Allow your guardian to view your vitals history (e.g., blood pressure, blood sugar).
+                            </FormDescription>
+                        </div>
+                        <FormControl>
+                            <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        </FormItem>
+                    )}
+                    />
+                <FormField
+                    control={form.control}
+                    name="permissions.location"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <FormLabel className="text-base">Share Location Data</FormLabel>
+                            <FormDescription>
+                            Allow your guardian to see your location during an emergency (SOS).
+                            </FormDescription>
+                        </div>
+                        <FormControl>
+                            <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        </FormItem>
+                    )}
+                    />
+            </div>
+        </div>
+
+
         <Button type="submit" disabled={isSaving}>
           {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Save Changes

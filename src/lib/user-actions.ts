@@ -12,6 +12,11 @@ export type UserProfileAddon = {
   phone?: string | null;
   emergencyContacts?: string;
   healthConditions?: string;
+  language?: string;
+  permissions?: {
+    vitals: boolean;
+    location: boolean;
+  };
 }
 
 /**
@@ -38,6 +43,8 @@ export function createUserProfile(
     phone: additionalData.phone || user.phoneNumber || '',
     emergencyContacts: additionalData.emergencyContacts || '',
     healthConditions: additionalData.healthConditions || '',
+    language: additionalData.language || 'en',
+    permissions: additionalData.permissions || { vitals: true, location: true },
     createdAt: serverTimestamp(),
   };
 
@@ -59,5 +66,10 @@ export function updateUserProfile(
   if (!userId) throw new Error('User ID is required to update a profile.');
   const userRef = doc(firestore, 'users', userId);
 
-  return setDocumentNonBlocking(userRef, data, { merge: true });
+  const updateData = {
+    ...data,
+    updatedAt: serverTimestamp(),
+  }
+
+  return setDocumentNonBlocking(userRef, updateData, { merge: true });
 }
