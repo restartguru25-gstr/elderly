@@ -3,7 +3,7 @@ import { DailyCheckinCard } from '@/components/features/daily-checkin-card';
 import { MoodTracker } from '@/components/features/mood-tracker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpRight, Image, Stethoscope, Users, Briefcase, Pill, HeartPulse } from 'lucide-react';
+import { ArrowUpRight, Image, Stethoscope, Users, Briefcase, Pill, HeartPulse, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 const quickLinks = [
@@ -11,6 +11,7 @@ const quickLinks = [
   { href: '/dashboard/telemedicine', icon: Stethoscope, label: 'Telemedicine', description: 'Consult with trusted doctors.' },
   { href: '/dashboard/medications', icon: Pill, label: 'Medications', description: 'Manage medication schedules.' },
   { href: '/dashboard/vitals', icon: HeartPulse, label: 'Vitals', description: 'Track important health metrics.' },
+  { href: '/dashboard/medical-records', icon: FileText, label: 'Medical Records', description: 'Securely store documents.' },
   { href: '/dashboard/community', icon: Users, label: 'Community', description: 'Connect with friends & peers.' },
   { href: '/dashboard/skills-marketplace', icon: Briefcase, label: 'Skills Marketplace', description: 'Share your expertise.' },
 ]

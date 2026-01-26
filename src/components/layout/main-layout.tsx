@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, Briefcase, LogOut, User, Pill, HeartPulse } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, Briefcase, LogOut, User, Pill, HeartPulse, FileText } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { SOSButton } from '../features/sos-button';
@@ -38,6 +38,7 @@ const navItems = [
   { href: '/dashboard/telemedicine', icon: Stethoscope, label: 'Telemedicine' },
   { href: '/dashboard/medications', icon: Pill, label: 'Medications' },
   { href: '/dashboard/vitals', icon: HeartPulse, label: 'Vitals' },
+  { href: '/dashboard/medical-records', icon: FileText, label: 'Medical Records' },
   { href: '/dashboard/community', icon: Users, label: 'Community' },
   { href: '/dashboard/skills-marketplace', icon: Briefcase, label: 'Skills Marketplace' },
 ];

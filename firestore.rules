@@ -104,102 +104,111 @@ service cloud.firestore {
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
-    }
 
-    /**
-     * @description Manages a user's private mood check-in entries.
-     * @path /users/{userId}/moodCheckins/{moodCheckinId}
-     * @allow (create) A user creates a new mood check-in for themselves.
-     * @deny (get) A user attempts to read another user's mood check-in.
-     * @principle Restricts all access to the user's own data tree.
-     */
-    match /users/{userId}/moodCheckins/{moodCheckinId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
-    }
+      /**
+       * @description Manages a user's private mood check-in entries.
+       * @path /users/{userId}/moodCheckins/{moodCheckinId}
+       * @allow (create) A user creates a new mood check-in for themselves.
+       * @deny (get) A user attempts to read another user's mood check-in.
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /moodCheckins/{moodCheckinId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
 
-    /**
-     * @description Manages a user's private daily check-in entries.
-     * @path /users/{userId}/daily_checkins/{checkinId}
-     * @principle Restricts all access to the user's own data tree.
-     */
-    match /users/{userId}/daily_checkins/{checkinId} {
-      allow get, list, create: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
-    }
+      /**
+       * @description Manages a user's private daily check-in entries.
+       * @path /users/{userId}/daily_checkins/{checkinId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /daily_checkins/{checkinId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
 
-    /**
-     * @description Manages a user's private emergency alerts.
-     * @path /users/{userId}/emergencyAlerts/{emergencyAlertId}
-     * @allow (create) A user creates a new emergency alert for themselves.
-     * @deny (list) A user attempts to list another user's emergency alerts.
-     * @principle Restricts all access to the user's own data tree.
-     */
-    match /users/{userId}/emergencyAlerts/{emergencyAlertId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
-    }
+      /**
+       * @description Manages a user's private emergency alerts.
+       * @path /users/{userId}/emergencyAlerts/{emergencyAlertId}
+       * @allow (create) A user creates a new emergency alert for themselves.
+       * @deny (list) A user attempts to list another user's emergency alerts.
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /emergencyAlerts/{emergencyAlertId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
 
-    /**
-     * @description Manages a user's private telemedicine appointments.
-     * @path /users/{userId}/telemedicineAppointments/{telemedicineAppointmentId}
-     * @allow (get) A user reads one of their own appointments.
-     * @deny (update) A user tries to modify another user's appointment.
-     * @principle Restricts all access to the user's own data tree.
-     */
-    match /users/{userId}/telemedicineAppointments/{telemedicineAppointmentId} {
-      allow get, list, create: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
-    }
+      /**
+       * @description Manages a user's private telemedicine appointments.
+       * @path /users/{userId}/telemedicineAppointments/{telemedicineAppointmentId}
+       * @allow (get) A user reads one of their own appointments.
+       * @deny (update) A user tries to modify another user's appointment.
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /telemedicineAppointments/{telemedicineAppointmentId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
 
-    /**
-     * @description Manages a user's private medical prescriptions. Access is
-     *              limited to the patient only.
-     * @path /users/{userId}/prescriptions/{prescriptionId}
-     * @allow (list) A user lists their own prescriptions.
-     * @deny (get) A doctor attempts to read a patient's prescription via this path.
-     *             (Note: A different access pattern would be needed for doctor access).
-     * @principle Restricts all access to the user's own data tree.
-     */
-    match /users/{userId}/prescriptions/{prescriptionId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.patientId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.patientId == resource.data.patientId;
-      allow delete: if isExistingOwner(userId);
-    }
-    
-    /**
-     * @description Manages a user's private vitals readings.
-     * @path /users/{userId}/vitals/{vitalId}
-     * @principle Restricts all access to the user's own data tree.
-     */
-    match /users/{userId}/vitals/{vitalId} {
-      allow get, list, create: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
-    }
-    
-    /**
-     * @description Manages a user's private medication schedules.
-     * @path /users/{userId}/medications/{medicationId}
-     * @principle Restricts all access to the user's own data tree.
-     */
-    match /users/{userId}/medications/{medicationId} {
-      allow get, list, create: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
-    }
-    
-    /**
-     * @description Manages a user's private medication logs.
-     * @path /users/{userId}/medication_logs/{medicationLogId}
-     * @principle Restricts all access to the user's own data tree.
-     */
-    match /users/{userId}/medication_logs/{medicationLogId} {
-      allow get, list, create, update: if isOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      /**
+       * @description Manages a user's private medical prescriptions. Access is
+       *              limited to the patient only.
+       * @path /users/{userId}/prescriptions/{prescriptionId}
+       * @allow (list) A user lists their own prescriptions.
+       * @deny (get) A doctor attempts to read a patient's prescription via this path.
+       *             (Note: A different access pattern would be needed for doctor access).
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /prescriptions/{prescriptionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.patientId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.patientId == resource.data.patientId;
+        allow delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Manages a user's private vitals readings.
+       * @path /users/{userId}/vitals/{vitalId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /vitals/{vitalId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Manages a user's private medication schedules.
+       * @path /users/{userId}/medications/{medicationId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /medications/{medicationId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Manages a user's private medication logs.
+       * @path /users/{userId}/medication_logs/{medicationLogId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /medication_logs/{medicationLogId} {
+        allow get, list, create, update: if isOwner(userId);
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Manages metadata for a user's private medical documents.
+       * @path /users/{userId}/medical_docs/{docId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /medical_docs/{docId} {
+        allow get, list, create, delete: if isOwner(userId);
+      }
     }
 
 
