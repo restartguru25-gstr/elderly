@@ -1,0 +1,360 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Badge } from '@/components/ui/badge';
+import {
+  Loader2,
+  PlusCircle,
+  Users,
+  Music2,
+  Gamepad2,
+  Flower2,
+  Brain,
+  Sparkles,
+  Calendar,
+  ArrowRight,
+  Radio,
+} from 'lucide-react';
+import Image from 'next/image';
+import {
+  useCollection,
+  useFirestore,
+  useUser,
+  useMemoFirebase,
+} from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { createCommunityForum } from '@/lib/community-actions';
+import { WithId } from '@/firebase/firestore/use-collection';
+import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
+
+const forumSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters.'),
+  description: z.string().min(10, 'Description is too short.'),
+  interest: z.string().min(2, 'Interest is required.'),
+});
+
+type ForumFormValues = z.infer<typeof forumSchema>;
+
+type CommunityForum = {
+  name: string;
+  description: string;
+  memberIds: string[];
+  imageId: string;
+  createdAt: any;
+};
+
+const eventCategories = [
+  { id: 'all', label: 'All', icon: Sparkles },
+  { id: 'singing', label: 'Singing & Music', icon: Music2 },
+  { id: 'games', label: 'Games', icon: Gamepad2 },
+  { id: 'yoga', label: 'Yoga & Fitness', icon: Flower2 },
+  { id: 'meditation', label: 'Meditation', icon: Brain },
+  { id: 'literacy', label: 'Digital Literacy', icon: Radio },
+];
+
+const upcomingEvents = [
+  { id: '1', title: 'Morning Yoga Session', category: 'yoga', time: '9:00 AM', live: true, participants: 24 },
+  { id: '2', title: 'Classic Songs Karaoke', category: 'singing', time: '11:00 AM', live: false, participants: 18 },
+  { id: '3', title: 'Tombola & Fun Games', category: 'games', time: '3:00 PM', live: false, participants: 32 },
+  { id: '4', title: 'Guided Meditation', category: 'meditation', time: '6:00 PM', live: false, participants: 15 },
+];
+
+function CreateForumDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<ForumFormValues>({
+    resolver: zodResolver(forumSchema),
+    defaultValues: { name: '', description: '', interest: '' },
+  });
+
+  const onSubmit = (values: ForumFormValues) => {
+    if (!user) return;
+    setIsSubmitting(true);
+    createCommunityForum(firestore, user.uid, { ...values, imageId: 'community-books' })
+      .then(() => {
+        toast({
+          title: 'Forum Created!',
+          description: `${values.name} is now live.`,
+        });
+        form.reset();
+        onOpenChange(false);
+      })
+      .finally(() => setIsSubmitting(false));
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="gradient" size="lg">
+          <PlusCircle className="mr-2 h-5 w-5" />
+          Create New Forum
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create a New Community Forum</DialogTitle>
+          <DialogDescription>
+            Start a new group to connect with others who share your interests.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Forum Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Morning Walkers Club" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="What is this forum about?" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="interest"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Main Interest</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Fitness" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" variant="gradient" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Forum
+            </Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ForumCard({ group }: { group: WithId<CommunityForum> }) {
+  const image = PlaceHolderImages.find((p) => p.id === group.imageId) || PlaceHolderImages.find((p) => p.id === 'community-yoga');
+
+  return (
+    <Link href={`/dashboard/community/${group.id}`} className="block group">
+      <Card className="overflow-hidden flex flex-col h-full border-2 transition-all duration-300 hover:border-primary hover:shadow-warm">
+        {image && (
+          <div className="relative h-48 w-full overflow-hidden">
+            <Image
+              src={image.imageUrl}
+              alt={group.name}
+              fill
+              style={{ objectFit: 'cover' }}
+              className="transition-transform duration-300 group-hover:scale-105"
+              data-ai-hint={image.imageHint}
+              loading="lazy"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          </div>
+        )}
+        <CardHeader>
+          <CardTitle className="text-xl">{group.name}</CardTitle>
+          <CardDescription className="line-clamp-2">{group.description}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-grow" />
+        <CardFooter className="flex justify-between items-center bg-secondary/30 py-4 px-6">
+          <div className="flex items-center text-sm text-muted-foreground gap-2">
+            <Users className="h-4 w-4" />
+            <span>{group.memberIds?.length || 0} members</span>
+          </div>
+          <Button variant="outline" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+            Join
+            <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+    </Link>
+  );
+}
+
+export default function CommunityPage() {
+  const firestore = useFirestore();
+  const [isCreateOpen, setCreateOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('all');
+
+  const forumsQuery = useMemoFirebase(
+    () => query(collection(firestore, 'communityForums'), orderBy('createdAt', 'desc')),
+    [firestore]
+  );
+  const { data: forums, isLoading } = useCollection<CommunityForum>(forumsQuery);
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+        <div>
+          <h1 className="mb-2 text-4xl font-bold text-foreground">
+            Community & Events
+          </h1>
+          <p className="max-w-2xl text-lg text-muted-foreground">
+            Connect with like-minded individuals, join live events, and make new friends.
+          </p>
+        </div>
+        <CreateForumDialog open={isCreateOpen} onOpenChange={setCreateOpen} />
+      </div>
+
+      {/* Event Categories */}
+      <div className="flex flex-wrap gap-2">
+        {eventCategories.map((cat) => (
+          <Button
+            key={cat.id}
+            variant={activeCategory === cat.id ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-xl"
+            onClick={() => setActiveCategory(cat.id)}
+          >
+            <cat.icon className="h-4 w-4 mr-2" />
+            {cat.label}
+          </Button>
+        ))}
+      </div>
+
+      {/* Upcoming Events - Khyaal style */}
+      <Card className="border-2 shadow-soft">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Calendar className="h-6 w-6 text-primary" />
+                Live Events & Activities
+              </CardTitle>
+              <CardDescription>Participate in 1100+ live events — singing, yoga, games & more</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {upcomingEvents.map((event) => (
+              <Card
+                key={event.id}
+                variant="bordered"
+                className="overflow-hidden group hover:border-primary hover:shadow-warm transition-all duration-300"
+              >
+                <CardContent className="p-0">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant={event.live ? 'destructive' : 'secondary'} className="text-xs">
+                        {event.live ? (
+                          <>
+                            <span className="relative flex h-2 w-2 mr-1">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                            </span>
+                            Live
+                          </>
+                        ) : (
+                          event.time
+                        )}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {event.participants}
+                      </span>
+                    </div>
+                    <h3 className="font-semibold text-base mb-1">{event.title}</h3>
+                    <Button size="sm" variant="gradient" className="w-full mt-3">
+                      Join Event
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Forums */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Community Forums</h2>
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <Skeleton className="h-80 w-full rounded-xl" />
+            <Skeleton className="h-80 w-full rounded-xl" />
+            <Skeleton className="h-80 w-full rounded-xl" />
+          </div>
+        ) : forums && forums.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {forums.map((group) => (
+              <ForumCard key={group.id} group={group} />
+            ))}
+          </div>
+        ) : (
+          <Card variant="bordered" className="border-dashed">
+            <CardContent className="py-16 text-center">
+              <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No Forums Yet</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Be the first to create a community forum and bring people together!
+              </p>
+              <CreateForumDialog open={isCreateOpen} onOpenChange={setCreateOpen} />
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}

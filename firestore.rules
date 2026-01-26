@@ -1,0 +1,318 @@
+
+/**
+ * This ruleset defines the security model for the ElderLink application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for all personal and sensitive
+ * data, such as health information, appointments, and alerts. All such data is
+ * stored within a user-specific document tree, making ownership explicit and rules
+ * simple and performant. It also provides a collaborative model for community
+ * forums, where access is controlled by a membership list.
+ *
+ * Data Structure:
+ * - /users/{userId}: The root for all user-specific data. Each user has a
+ *   profile document and dedicated subcollections for their private data.
+ * - /communityForums/{communityForumId}: A top-level collection for shared
+ *   community spaces, with access managed by a 'memberIds' array on each document.
+ *
+ * Key Security Decisions:
+ * - User-Owned Data: Access to user subcollections (moodCheckins, emergencyAlerts,
+ *   telemedicineAppointments, prescriptions, vitals, medications, medication_logs) is strictly limited to the user
+ *   identified in the path. This prevents any user from accessing another's private data.
+ * - Public User Profiles: User profile documents in the top-level `/users`
+ *   collection are publicly readable by anyone, including unauthenticated users, to
+ *   facilitate user discovery. However, all write operations (create, update, delete)
+ *   are restricted to the profile owner. CAUTION: This collection contains potentially
+ *   sensitive fields like 'email' and 'phone'; review for production.
+ * - Collaborative Forums: Any signed-in user can create a community forum.
+ *   Read and write access to a forum is granted to any user whose UID is in the
+ *   'memberIds' array. Deletion of forums is disabled as there is no designated owner role.
+ *
+ * Denormalization for Authorization:
+ * - User Subcollections: Documents within user subcollections (e.g., MoodCheckin)
+ *   contain a denormalized 'userId' field. Rules enforce that this field matches
+ *   the user from the path on creation and remains immutable, ensuring data integrity
+ *   without costly lookups.
+ * - Community Forums: Each forum document contains a 'memberIds' array. This allows
+ *   rules to grant access by checking this list directly, avoiding any cross-document
+ *   reads (`get()` calls) and enabling secure, efficient queries for members.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----------------------------------------------------------------------
+    // Helper Functions
+    // ----------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the primary function for validating ownership of a document or data tree.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if a resource already exists and if the requester is the owner.
+     * Used for safe update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /**
+     * Checks if the requesting user is a member of a document
+     * by looking for their UID in a 'memberIds' list.
+     * This function assumes the list exists on the resource.
+     */
+    function isMember() {
+      return isSignedIn() && request.auth.uid in resource.data.memberIds;
+    }
+
+    /**
+     * Checks if a resource exists and the requester is a member.
+     * Used for safe update operations on collaborative documents.
+     */
+    function isExistingMember() {
+      return resource != null && isMember();
+    }
+    
+    /**
+     * Checks if a user is a member of a chat by reading the parent chat document.
+     */
+    function isChatMember(chatId) {
+      return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberIds;
+    }
+    
+    /**
+     * Checks if a user is a member of a community forum by reading the forum document.
+     */
+    function isForumMember(forumId) {
+      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/communityForums/$(forumId)).data.memberIds;
+    }
+
+
+    // ----------------------------------------------------------------------
+    // Collection Rules
+    // ----------------------------------------------------------------------
+
+    /**
+     * @description Manages user profiles. Profiles are publicly readable, but
+     *              only the owner can create, modify, or delete their own profile.
+     * @path /users/{userId}
+     * @allow (get) Anyone, authenticated or not, can read any user's profile.
+     * @deny (update) A user tries to update another user's profile.
+     * @principle Enforces self-creation and document ownership for writes, while allowing
+     *            public reads as specified.
+     */
+    match /users/{userId} {
+      allow get, list: if true;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Manages a user's private mood check-in entries.
+       * @path /users/{userId}/moodCheckins/{moodCheckinId}
+       * @allow (create) A user creates a new mood check-in for themselves.
+       * @deny (get) A user attempts to read another user's mood check-in.
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /moodCheckins/{moodCheckinId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Manages a user's private daily check-in entries.
+       * @path /users/{userId}/daily_checkins/{checkinId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /daily_checkins/{checkinId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Manages a user's private emergency alerts.
+       * @path /users/{userId}/emergencyAlerts/{emergencyAlertId}
+       * @allow (create) A user creates a new emergency alert for themselves.
+       * @deny (list) A user attempts to list another user's emergency alerts.
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /emergencyAlerts/{emergencyAlertId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Manages a user's private telemedicine appointments.
+       * @path /users/{userId}/telemedicineAppointments/{telemedicineAppointmentId}
+       * @allow (get) A user reads one of their own appointments.
+       * @deny (update) A user tries to modify another user's appointment.
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /telemedicineAppointments/{telemedicineAppointmentId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Manages a user's private medical prescriptions. Access is
+       *              limited to the patient only.
+       * @path /users/{userId}/prescriptions/{prescriptionId}
+       * @allow (list) A user lists their own prescriptions.
+       * @deny (get) A doctor attempts to read a patient's prescription via this path.
+       *             (Note: A different access pattern would be needed for doctor access).
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /prescriptions/{prescriptionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.patientId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.patientId == resource.data.patientId;
+        allow delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Manages a user's private vitals readings.
+       * @path /users/{userId}/vitals/{vitalId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /vitals/{vitalId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Manages a user's private medication schedules.
+       * @path /users/{userId}/medications/{medicationId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /medications/{medicationId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+      
+      /**
+       * @description Manages a user's private medication logs.
+       * @path /users/{userId}/medication_logs/{medicationLogId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /medication_logs/{medicationLogId} {
+        allow get, list, create, update: if isOwner(userId);
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Manages metadata for a user's private medical documents.
+       * @path /users/{userId}/medical_docs/{docId}
+       * @principle Restricts all access to the user's own data tree.
+       */
+      match /medical_docs/{docId} {
+        allow get, list, create, delete: if isOwner(userId);
+      }
+    }
+
+    /**
+     * @description Manages the link between a senior and a guardian.
+     * @path /profile_links/{linkId}
+     * @principle A guardian can create a pending link. The senior can accept it.
+     */
+     match /profile_links/{linkId} {
+      allow get: if isSignedIn() && (isOwner(resource.data.seniorUid) || isOwner(resource.data.guardianUid));
+      allow create: if isSignedIn() && isOwner(request.resource.data.guardianUid) && request.resource.data.status == 'pending';
+      allow update: if isSignedIn() && isOwner(resource.data.seniorUid) && request.resource.data.status == 'active';
+      allow delete: if isSignedIn() && isOwner(resource.data.guardianUid) && resource.data.status == 'pending';
+    }
+
+
+    /**
+     * @description Manages shared community forums. Signed-in users can read forums.
+     *              Only members listed in the `memberIds` array can update a forum.
+     * @path /communityForums/{communityForumId}
+     * @allow (create) Any signed-in user creates a new forum, adding themselves as the first member.
+     * @deny (update) A non-member user tries to change the forum description.
+     * @principle Implements a shared access model based on a collaborative membership list.
+     */
+    match /communityForums/{communityForumId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.memberIds;
+      // Allow members to update details, or any user to join by adding themselves
+      allow update: if isSignedIn() && (
+        (isMember() && request.resource.data.memberIds == resource.data.memberIds) ||
+        (
+          request.resource.data.memberIds.size() == resource.data.memberIds.size() + 1 &&
+          request.resource.data.memberIds.hasAll(resource.data.memberIds) &&
+          request.resource.data.memberIds.hasAny([request.auth.uid])
+        )
+      );
+      allow delete: if false; // Deleting forums is disabled.
+
+      /**
+       * @description Manages posts within a community forum.
+       * @path /communityForums/{communityForumId}/posts/{postId}
+       * @principle Access is restricted to members of the parent forum.
+       */
+      match /posts/{postId} {
+        allow list, get: if isForumMember(communityForumId);
+        allow create: if isForumMember(communityForumId) && request.resource.data.authorId == request.auth.uid;
+        allow update, delete: if isForumMember(communityForumId) && resource.data.authorId == request.auth.uid;
+      }
+    }
+
+    /**
+     * @description Manages skill listings in the marketplace.
+     * @path /skillListings/{skillId}
+     * @allow (create) An authenticated user can create a listing for themselves.
+     * @principle Restricts write access to the owner of the listing.
+     */
+    match /skillListings/{skillId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(request.resource.data.authorId);
+      allow update, delete: if isExistingOwner(resource.data.authorId);
+    }
+    
+    /**
+     * @description Manages chat conversations.
+     * @path /chats/{chatId}
+     * @principle Access is restricted to members of the chat.
+     */
+    match /chats/{chatId} {
+      allow get, update: if isChatMember(chatId);
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.memberIds;
+      
+      /**
+       * @description Manages messages within a chat.
+       * @path /chats/{chatId}/messages/{messageId}
+       * @principle Inherits access from the parent chat. Only members can read/write.
+       */
+      match /messages/{messageId} {
+        allow get, list: if isChatMember(chatId);
+        allow create: if isChatMember(chatId) && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if false; // Messages are immutable
+      }
+    }
+    
+    /**
+     * @description Manages user rewards (ElderCoins).
+     * @path /rewards/{userId}
+     * @principle Restricts all access to the owner of the rewards document.
+     */
+    match /rewards/{userId} {
+      allow get, create, update: if isOwner(userId);
+      allow delete: if false; // Rewards should not be deletable by users
+    }
+  }
+}
