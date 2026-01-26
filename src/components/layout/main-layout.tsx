@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -21,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, Briefcase, LogOut, User, Pill, HeartPulse, FileText } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { SOSButton } from '../features/sos-button';
@@ -41,6 +40,7 @@ const navItems = [
   { href: '/dashboard/medical-records', icon: FileText, label: 'Medical Records' },
   { href: '/dashboard/community', icon: Users, label: 'Community' },
   { href: '/dashboard/skills-marketplace', icon: Briefcase, label: 'Skills Marketplace' },
+  { href: '/dashboard/emergency', icon: Siren, label: 'SOS' },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {

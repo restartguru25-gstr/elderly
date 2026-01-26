@@ -75,66 +75,71 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background px-4">
-      <Card className="mx-auto w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="mb-4 flex justify-center">
-            <Logo />
-          </div>
-          <CardTitle className="text-2xl font-bold">Welcome to ElderLink</CardTitle>
-          <CardDescription>Enter your email below to login to your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleLogin)} className="grid gap-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <FormControl>
-                      <Input id="email" type="email" placeholder="m@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem className="grid gap-2">
-                    <div className="flex items-center">
-                      <Label htmlFor="password">Password</Label>
-                      <Link href="#" className="ml-auto inline-block text-sm underline">
-                        Forgot your password?
-                      </Link>
-                    </div>
-                    <FormControl>
-                      <Input id="password" type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Login
-              </Button>
-              <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isGoogleLoading}>
-                 {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Login with Google
-              </Button>
-            </form>
-          </Form>
-          <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="underline">
-              Sign up
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+            <div className="mb-6 flex justify-center">
+              <Logo />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
+            <p className="text-muted-foreground">Care, even from afar.</p>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Login to your account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleLogin)} className="grid gap-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <Label htmlFor="email">Email</Label>
+                      <FormControl>
+                        <Input id="email" type="email" placeholder="m@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <div className="flex items-center">
+                        <Label htmlFor="password">Password</Label>
+                        <Link href="#" className="ml-auto inline-block text-sm underline">
+                          Forgot your password?
+                        </Link>
+                      </div>
+                      <FormControl>
+                        <Input id="password" type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Login
+                </Button>
+                <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isGoogleLoading}>
+                  {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Login with Google
+                </Button>
+              </form>
+            </Form>
+            <div className="mt-4 text-center text-sm">
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="underline">
+                Sign up
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

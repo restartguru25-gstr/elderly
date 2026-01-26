@@ -57,8 +57,6 @@ export default function SignupPage() {
         lastName: values.lastName,
         userType: values.role,
         phone: user.phoneNumber, // This might be null
-        emergencyContacts: '',
-        healthConditions: ''
       });
 
       toast({
@@ -86,7 +84,7 @@ export default function SignupPage() {
             <Logo />
           </div>
           <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
-          <CardDescription>Join ElderLink to care for your loved ones.</CardDescription>
+          <CardDescription>Join ElderLink to care for your loved ones. Always with you.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -158,7 +156,7 @@ export default function SignupPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="senior">Senior User</SelectItem>
+                        <SelectItem value="senior">Parent / Senior</SelectItem>
                         <SelectItem value="guardian">Guardian / Child</SelectItem>
                       </SelectContent>
                     </Select>
