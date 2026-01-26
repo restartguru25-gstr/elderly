@@ -52,6 +52,7 @@ type MedicationLog = {
   medicationId: string;
   userId: string;
   taken: boolean;
+  date: string;
   timestamp: any;
 }
 
@@ -135,12 +136,10 @@ export default function MedicationsPage() {
   const { data: medications, isLoading: medicationsLoading } = useCollection<Medication>(medicationsQuery);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const medicationLogIds = useMemo(() => medications?.map(m => `${m.id}_${todayStr}`) || [], [medications, todayStr]);
-
   const logsQuery = useMemoFirebase(() => {
-    if (!user || medicationLogIds.length === 0) return null;
-    return query(collection(firestore, `users/${user.uid}/medication_logs`), where('__name__', 'in', medicationLogIds));
-  }, [firestore, user, medicationLogIds]);
+    if (!user) return null;
+    return query(collection(firestore, `users/${user.uid}/medication_logs`), where('date', '==', todayStr));
+  }, [firestore, user, todayStr]);
 
   const { data: medicationLogs, isLoading: logsLoading } = useCollection<MedicationLog>(logsQuery);
   
@@ -249,3 +248,5 @@ export default function MedicationsPage() {
     </div>
   );
 }
+
+    
