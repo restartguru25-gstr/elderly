@@ -99,6 +99,23 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/communityForums/$(forumId)).data.memberIds;
     }
 
+    /**
+     * Checks if the requesting guardian is linked to the senior (userId) and has permission.
+     * @param userId The senior's user ID
+     * @param permissionType 'vitals' or 'location' - the permission to check
+     */
+    function isLinkedGuardianWithPermission(userId, permissionType) {
+      if (!isSignedIn()) return false;
+      let seniorProfile = get(/databases/$(database)/documents/users/$(userId)).data;
+      // Check if guardian is in senior's linkedProfiles
+      if (!(request.auth.uid in (seniorProfile.linkedProfiles != null ? seniorProfile.linkedProfiles : []))) {
+        return false;
+      }
+      // Check if permission is granted (defaults to true if not set)
+      let permissions = seniorProfile.permissions != null ? seniorProfile.permissions : {};
+      return permissions[permissionType] != null ? permissions[permissionType] : true;
+    }
+
 
     // ----------------------------------------------------------------------
     // Collection Rules
@@ -116,18 +133,21 @@ service cloud.firestore {
     match /users/{userId} {
       allow get, list: if true;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow update: if (isExistingOwner(userId) && request.resource.data.id == resource.data.id)
+        || (isSignedIn()
+            && request.resource.data.id == resource.data.id
+            && request.resource.data.linkedProfiles.hasAll(resource.data.get('linkedProfiles', []))
+            && request.resource.data.linkedProfiles.hasAny([request.auth.uid])
+            && request.resource.data.linkedProfiles.size() <= resource.data.get('linkedProfiles', []).size() + 1);
       allow delete: if isExistingOwner(userId);
 
       /**
        * @description Manages a user's private mood check-in entries.
        * @path /users/{userId}/moodCheckins/{moodCheckinId}
-       * @allow (create) A user creates a new mood check-in for themselves.
-       * @deny (get) A user attempts to read another user's mood check-in.
-       * @principle Restricts all access to the user's own data tree.
+       * @principle Owner can do everything. Linked guardians can read (to see parent's mood).
        */
       match /moodCheckins/{moodCheckinId} {
-        allow get, list: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isLinkedGuardianWithPermission(userId, 'vitals');
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
         allow delete: if isExistingOwner(userId);
@@ -146,12 +166,10 @@ service cloud.firestore {
       /**
        * @description Manages a user's private emergency alerts.
        * @path /users/{userId}/emergencyAlerts/{emergencyAlertId}
-       * @allow (create) A user creates a new emergency alert for themselves.
-       * @deny (list) A user attempts to list another user's emergency alerts.
-       * @principle Restricts all access to the user's own data tree.
+       * @principle Owner can do everything. Linked guardians can read (to see parent's alerts).
        */
       match /emergencyAlerts/{emergencyAlertId} {
-        allow get, list: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isLinkedGuardianWithPermission(userId, 'location');
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
         allow delete: if isExistingOwner(userId);
@@ -160,12 +178,11 @@ service cloud.firestore {
       /**
        * @description Manages a user's private telemedicine appointments.
        * @path /users/{userId}/telemedicineAppointments/{telemedicineAppointmentId}
-       * @allow (get) A user reads one of their own appointments.
-       * @deny (update) A user tries to modify another user's appointment.
-       * @principle Restricts all access to the user's own data tree.
+       * @principle Owner can do everything. Linked guardians can read and create (book on behalf).
        */
       match /telemedicineAppointments/{telemedicineAppointmentId} {
-        allow get, list, create: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isLinkedGuardianWithPermission(userId, 'vitals');
+        allow create: if isOwner(userId) || isLinkedGuardianWithPermission(userId, 'vitals');
         allow update, delete: if isExistingOwner(userId);
       }
 
@@ -188,30 +205,33 @@ service cloud.firestore {
       /**
        * @description Manages a user's private vitals readings.
        * @path /users/{userId}/vitals/{vitalId}
-       * @principle Restricts all access to the user's own data tree.
+       * @principle Owner can do everything. Linked guardians can read if permissions.vitals is true.
        */
       match /vitals/{vitalId} {
-        allow get, list, create: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isLinkedGuardianWithPermission(userId, 'vitals');
+        allow create: if isOwner(userId);
         allow update, delete: if isExistingOwner(userId);
       }
       
       /**
        * @description Manages a user's private medication schedules.
        * @path /users/{userId}/medications/{medicationId}
-       * @principle Restricts all access to the user's own data tree.
+       * @principle Owner can do everything. Linked guardians can read (medications are always shareable).
        */
       match /medications/{medicationId} {
-        allow get, list, create: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isLinkedGuardianWithPermission(userId, 'vitals');
+        allow create: if isOwner(userId);
         allow update, delete: if isExistingOwner(userId);
       }
       
       /**
        * @description Manages a user's private medication logs.
        * @path /users/{userId}/medication_logs/{medicationLogId}
-       * @principle Restricts all access to the user's own data tree.
+       * @principle Owner can do everything. Linked guardians can read.
        */
       match /medication_logs/{medicationLogId} {
-        allow get, list, create, update: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isLinkedGuardianWithPermission(userId, 'vitals');
+        allow create, update: if isOwner(userId);
         allow delete: if isExistingOwner(userId);
       }
 
@@ -223,6 +243,29 @@ service cloud.firestore {
       match /medical_docs/{docId} {
         allow get, list, create, delete: if isOwner(userId);
       }
+
+      /**
+       * @description Reminders from guardians to senior.
+       * @path /users/{userId}/reminders/{reminderId}
+       * @principle Senior can read/update (mark read). Linked guardians can create.
+       */
+      match /reminders/{reminderId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isLinkedGuardianWithPermission(userId, 'vitals') && request.resource.data.fromGuardianId == request.auth.uid;
+        allow update: if isExistingOwner(userId);
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Family linking: maps invite codes to senior user IDs.
+     * @path /linkCodes/{code}
+     * @principle Seniors create codes; any signed-in user can read (to link by code).
+     */
+    match /linkCodes/{code} {
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.seniorId == request.auth.uid;
+      allow update, delete: if false;
     }
 
     /**
@@ -290,7 +333,7 @@ service cloud.firestore {
      * @principle Access is restricted to members of the chat.
      */
     match /chats/{chatId} {
-      allow get, update: if isChatMember(chatId);
+      allow get, list, update: if isSignedIn() && request.auth.uid in resource.data.memberIds;
       allow create: if isSignedIn() && request.auth.uid in request.resource.data.memberIds;
       
       /**
@@ -313,6 +356,15 @@ service cloud.firestore {
     match /rewards/{userId} {
       allow get, create, update: if isOwner(userId);
       allow delete: if false; // Rewards should not be deletable by users
+    }
+
+    /**
+     * @description User feedback (ratings, comments). Signed-in users can submit only.
+     * @path /feedback/{feedbackId}
+     */
+    match /feedback/{feedbackId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow get, list, update, delete: if false;
     }
   }
 }

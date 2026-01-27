@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -38,6 +39,8 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -148,14 +151,14 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
+            <DialogTitle>{t('resetPassword')}</DialogTitle>
             <DialogDescription>
-              Enter your email address and we&apos;ll send you a link to reset your password.
+              {t('resetInstructions')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="reset-email">Email</Label>
+              <Label htmlFor="reset-email">{t('email')}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -177,7 +180,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                   setForgotPasswordEmail('');
                 }}
               >
-                Cancel
+                {tCommon('cancel')}
               </Button>
               <Button
                 className="flex-1 bg-gradient-primary text-white hover:opacity-90"
@@ -190,7 +193,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                     Sending...
                   </>
                 ) : (
-                  'Send Reset Link'
+                  <>{t('sendResetLink')}</>
                 )}
               </Button>
             </div>
@@ -204,9 +207,9 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Welcome Back!</DialogTitle>
+          <DialogTitle className="text-2xl">{t('welcomeBack')}</DialogTitle>
           <DialogDescription className="text-base">
-            Sign in to your account to continue your journey with ElderLink.
+            {t('signInSubtitle')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -216,7 +219,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('email')}</Label>
                   <FormControl>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -239,13 +242,13 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t('password')}</Label>
                     <button
                       type="button"
                       onClick={() => setShowForgotPassword(true)}
                       className="text-sm text-primary hover:underline"
                     >
-                      Forgot password?
+                      {t('forgotPassword')}
                     </button>
                   </div>
                   <FormControl>
@@ -276,7 +279,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                 </>
               ) : (
                 <>
-                  Sign In
+                  {tCommon('signIn')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}
@@ -334,7 +337,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
             className="font-semibold text-primary hover:underline"
             onClick={() => onOpenChange(false)}
           >
-            Sign up for free
+            {t('noAccount')} {t('signUp')}
           </Link>
         </div>
       </DialogContent>

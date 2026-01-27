@@ -5,13 +5,16 @@ import Link from 'next/link';
 export function Logo({
   className,
   showTagline = false,
+  href = '/dashboard',
 }: {
   className?: string;
   showTagline?: boolean;
+  /** Link destination. Use "/" for landing/signup, "/dashboard" for app. */
+  href?: string;
 }) {
   return (
     <Link
-      href="/dashboard"
+      href={href}
       className={cn(
         'group flex items-center gap-2.5 text-xl font-bold text-foreground group-data-[collapsible=icon]:justify-center',
         className

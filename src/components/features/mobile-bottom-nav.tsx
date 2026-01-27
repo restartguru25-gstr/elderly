@@ -2,21 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Home, HeartPulse, Users, Briefcase, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const mobileNavItems = [
-  { href: '/dashboard', icon: Home, label: 'Home' },
-  { href: '/dashboard/vitals', icon: HeartPulse, label: 'Health' },
-  { href: '/dashboard/community', icon: Users, label: 'Community' },
-  { href: '/dashboard/skills-marketplace', icon: Briefcase, label: 'Skills' },
-  { href: '/dashboard/profile', icon: User, label: 'Profile' },
+  { href: '/dashboard', icon: Home, key: 'dashboard' as const },
+  { href: '/dashboard/vitals', icon: HeartPulse, key: 'vitals' as const },
+  { href: '/dashboard/community', icon: Users, key: 'community' as const },
+  { href: '/dashboard/skills-marketplace', icon: Briefcase, key: 'skillsMarketplace' as const },
+  { href: '/dashboard/profile', icon: User, key: 'profile' as const },
 ];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const isMobile = useIsMobile();
+  const t = useTranslations('nav');
 
   if (!isMobile) return null;
 
@@ -35,7 +37,7 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 transition-colors',
+                'relative flex flex-col items-center justify-center gap-1 transition-colors',
                 isActive
                   ? 'text-primary bg-primary/5'
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
@@ -53,7 +55,7 @@ export function MobileBottomNav() {
                   isActive && 'font-semibold'
                 )}
               >
-                {item.label}
+                {t(item.key)}
               </span>
               {isActive && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 rounded-b-full bg-primary" />

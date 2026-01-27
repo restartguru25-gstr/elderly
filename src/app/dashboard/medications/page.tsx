@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -23,14 +22,19 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { createMedication, logMedication } from '@/lib/medication-actions';
+import { withRetry } from '@/lib/retry';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle, Pill, CalendarClock, History } from 'lucide-react';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { WithId } from '@/firebase/firestore/use-collection';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ParentSelector } from '@/components/features/parent-selector';
+import { useLinkedSenior } from '@/hooks/use-linked-senior';
+import { Badge } from '@/components/ui/badge';
 
 const medicationSchema = z.object({
   name: z.string().min(1, 'Medication name is required.'),
@@ -56,66 +60,97 @@ type MedicationLog = {
   timestamp: any;
 }
 
-function MedicationCard({ medication, todayLog }: { medication: WithId<Medication>, todayLog: WithId<MedicationLog> | undefined }) {
+function MedicationCard({
+  medication,
+  todayLog,
+  readOnly,
+}: {
+  medication: WithId<Medication>;
+  todayLog: WithId<MedicationLog> | undefined;
+  readOnly?: boolean;
+}) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
   const [isLogging, setIsLogging] = useState(false);
+  const [optimisticLog, setOptimisticLog] = useState<{ taken: boolean } | null>(null);
 
   const handleLogMedication = (taken: boolean) => {
     if (!user) return;
+    setOptimisticLog({ taken });
     setIsLogging(true);
     const today = format(new Date(), 'yyyy-MM-dd');
-    logMedication(firestore, user.uid, medication.id, { taken, date: today })
+    withRetry(() => logMedication(firestore, user.uid, medication.id, { taken, date: today }), { attempts: 3, delayMs: 800 })
       .then(() => {
         toast({
           title: `Medication ${taken ? 'Logged' : 'Marked as Skipped'}`,
           description: `${medication.name} has been updated for today.`,
         });
+        setOptimisticLog(null);
+      })
+      .catch(() => {
+        setOptimisticLog(null);
+        toast({ variant: 'destructive', title: 'Update failed', description: 'Could not save. Check connection and try again.' });
       })
       .finally(() => setIsLogging(false));
   };
-  
-  const wasTakenToday = todayLog?.taken === true;
-  const wasSkippedToday = todayLog?.taken === false;
+
+  const wasTakenToday = optimisticLog ? optimisticLog.taken === true : todayLog?.taken === true;
+  const wasSkippedToday = optimisticLog ? optimisticLog.taken === false : todayLog?.taken === false;
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-xl flex items-center gap-2"><Pill className="text-primary"/> {medication.name}</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Pill className="text-primary" /> {medication.name}
+            </CardTitle>
             <CardDescription>{medication.dosage}</CardDescription>
           </div>
-          <div className="text-sm text-muted-foreground flex items-center gap-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarClock className="h-4 w-4" />
             <span>{medication.schedule}</span>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">Log today's dose.</p>
+        {readOnly ? (
+          <p className="text-sm text-muted-foreground">
+            Today: {wasTakenToday ? (
+              <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Taken</Badge>
+            ) : wasSkippedToday ? (
+              <Badge variant="secondary">Skipped</Badge>
+            ) : (
+              <Badge variant="outline">Not logged</Badge>
+            )}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">Log today&apos;s dose.</p>
+        )}
       </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button
-          className="w-full"
-          onClick={() => handleLogMedication(true)}
-          disabled={isLogging || wasTakenToday}
-          variant={wasTakenToday ? 'default': 'outline'}
-        >
-          {isLogging ? <Loader2 className="animate-spin" /> : 'Taken'}
-        </Button>
-        <Button
-          className="w-full"
-          onClick={() => handleLogMedication(false)}
-          disabled={isLogging || wasSkippedToday}
-          variant={wasSkippedToday ? 'destructive' : 'outline'}
-        >
-          {isLogging ? <Loader2 className="animate-spin" /> : 'Skipped'}
-        </Button>
-      </CardFooter>
+      {!readOnly && (
+        <CardFooter className="flex gap-2">
+          <Button
+            className="w-full"
+            onClick={() => handleLogMedication(true)}
+            disabled={isLogging || wasTakenToday}
+            variant={wasTakenToday ? 'default' : 'outline'}
+          >
+            {isLogging ? <Loader2 className="animate-spin" /> : 'Taken'}
+          </Button>
+          <Button
+            className="w-full"
+            onClick={() => handleLogMedication(false)}
+            disabled={isLogging || wasSkippedToday}
+            variant={wasSkippedToday ? 'destructive' : 'outline'}
+          >
+            {isLogging ? <Loader2 className="animate-spin" /> : 'Skipped'}
+          </Button>
+        </CardFooter>
+      )}
     </Card>
-  )
+  );
 }
 
 export default function MedicationsPage() {
@@ -123,6 +158,16 @@ export default function MedicationsPage() {
   const { user } = useUser();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: userProfile } = useDoc(userDocRef);
+  const { linkedSeniors, selectedSeniorId } = useLinkedSenior();
+
+  const isGuardian = userProfile?.userType === 'guardian';
+  const viewUserId = isGuardian && linkedSeniors.length > 0 && selectedSeniorId ? selectedSeniorId : user?.uid ?? null;
+  const isGuardianView = isGuardian && !!selectedSeniorId;
 
   const form = useForm<MedicationFormValues>({
     resolver: zodResolver(medicationSchema),
@@ -130,28 +175,32 @@ export default function MedicationsPage() {
   });
 
   const medicationsQuery = useMemoFirebase(
-    () => user ? query(collection(firestore, `users/${user.uid}/medications`), orderBy('createdAt', 'desc')) : null,
-    [firestore, user]
+    () =>
+      viewUserId
+        ? query(collection(firestore, `users/${viewUserId}/medications`), orderBy('createdAt', 'desc'))
+        : null,
+    [firestore, viewUserId]
   );
   const { data: medications, isLoading: medicationsLoading } = useCollection<Medication>(medicationsQuery);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const logsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(collection(firestore, `users/${user.uid}/medication_logs`), where('date', '==', todayStr));
-  }, [firestore, user, todayStr]);
-
+  const logsQuery = useMemoFirebase(
+    () =>
+      viewUserId
+        ? query(collection(firestore, `users/${viewUserId}/medication_logs`), where('date', '==', todayStr))
+        : null,
+    [firestore, viewUserId, todayStr]
+  );
   const { data: medicationLogs, isLoading: logsLoading } = useCollection<MedicationLog>(logsQuery);
-  
+
   const getLogForMedication = (medicationId: string) => {
     if (!medicationLogs) return undefined;
-    return medicationLogs.find(log => log.medicationId === medicationId);
-  }
+    return medicationLogs.find((log) => log.medicationId === medicationId);
+  };
 
   const onSubmit = (values: MedicationFormValues) => {
     if (!user) return;
     setIsSubmitting(true);
-
     createMedication(firestore, user.uid, values)
       .then(() => {
         toast({
@@ -160,88 +209,102 @@ export default function MedicationsPage() {
         });
         form.reset();
       })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
+      .finally(() => setIsSubmitting(false));
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div className="md:col-span-1">
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New Medication</CardTitle>
-            <CardDescription>
-              Enter details for a new medication schedule.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Medication Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Paracetamol" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="dosage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dosage</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 500mg" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="schedule"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Schedule</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., After Breakfast" {...field} />
-                      </FormControl>
-                       <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="animate-spin" /> : <PlusCircle />}
-                  Add Medication
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+      {!isGuardianView && (
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Add New Medication</CardTitle>
+              <CardDescription>Enter details for a new medication schedule.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Medication Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Paracetamol" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="dosage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dosage</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 500mg" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="schedule"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Schedule</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., After Breakfast" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="animate-spin" /> : <PlusCircle />}
+                    Add Medication
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      <div className="md:col-span-2">
-         <div className="mb-4">
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2"><History className="h-8 w-8" /> Your Medications</h1>
-          <p className="text-muted-foreground">Manage and track your medication schedule.</p>
+      <div className={isGuardianView ? 'md:col-span-3' : 'md:col-span-2'}>
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="flex items-center gap-2 text-3xl font-bold text-foreground">
+              <History className="h-8 w-8" /> {isGuardianView ? "Parent's Medications" : 'Your Medications'}
+            </h1>
+            <p className="text-muted-foreground">
+              {isGuardianView ? "View and track your parent's medication schedule." : 'Manage and track your medication schedule.'}
+            </p>
+          </div>
+          {isGuardian && <ParentSelector />}
         </div>
         <div className="space-y-4">
-           {medicationsLoading || logsLoading ? (
+          {medicationsLoading || logsLoading ? (
             <>
               <Skeleton className="h-40 w-full" />
               <Skeleton className="h-40 w-full" />
             </>
           ) : medications && medications.length > 0 ? (
-            medications.map((med) => <MedicationCard key={med.id} medication={med} todayLog={getLogForMedication(med.id)} />)
+            medications.map((med) => (
+              <MedicationCard
+                key={med.id}
+                medication={med}
+                todayLog={getLogForMedication(med.id)}
+                readOnly={isGuardianView}
+              />
+            ))
           ) : (
-            <p className="text-muted-foreground text-center py-8">No medications added yet. Add one to get started.</p>
+            <p className="py-8 text-center text-muted-foreground">
+              {isGuardianView ? "No medications added yet for this parent." : 'No medications added yet. Add one to get started.'}
+            </p>
           )}
         </div>
       </div>

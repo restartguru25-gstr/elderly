@@ -5,6 +5,7 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { GuardianProvider } from '@/hooks/use-linked-senior';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
@@ -20,14 +21,14 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="w-full max-w-md space-y-4 p-4">
-           <Skeleton className="h-12 w-1/2" />
-           <Skeleton className="h-8 w-3/4" />
-           <div className="grid grid-cols-2 gap-4 pt-4">
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-           </div>
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-5 w-64" />
+          <div className="grid grid-cols-2 gap-4 pt-4">
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
         </div>
       </div>
     );
@@ -40,7 +41,9 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
-      <MainLayout>{children}</MainLayout>
+      <GuardianProvider>
+        <MainLayout>{children}</MainLayout>
+      </GuardianProvider>
     </AuthGuard>
   );
 }

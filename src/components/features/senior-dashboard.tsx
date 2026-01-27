@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { DailyCheckinCard } from './daily-checkin-card';
 import { MoodTracker } from './mood-tracker';
 import { RewardsCoins } from './rewards-coins';
+import { HealthInsightsCard } from './health-insights-card';
+import { RemindersCard } from './reminders-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -198,8 +200,11 @@ export function SeniorDashboard({ userProfile }: { userProfile: WithId<UserProfi
 
                 {/* Right Sidebar */}
                 <div className="lg:col-span-1 space-y-6 sm:space-y-8">
+                    <RemindersCard />
+                    <HealthInsightsCard />
+                    <GamificationCard />
                     <MoodTracker />
-                    
+
                     {/* Rewards & Coins */}
                     <Card className="border-2">
                         <CardHeader>

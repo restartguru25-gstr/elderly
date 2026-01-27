@@ -5,13 +5,25 @@ import { doc, serverTimestamp, Firestore } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { setDocumentNonBlocking } from '@/firebase';
 
+export type EmergencyContact = {
+  name?: string;
+  mobile: string;
+  relation: string;
+};
+
+export type NotificationPreferences = {
+  pushReminders?: boolean;
+  pushEmergency?: boolean;
+  pushCommunity?: boolean;
+};
+
 export type UserProfileAddon = {
   firstName: string;
-  lastName:string;
+  lastName: string;
   userType: 'senior' | 'guardian' | 'provider' | 'admin';
   phone?: string | null;
   age?: number;
-  emergencyContacts?: string[];
+  emergencyContacts?: EmergencyContact[];
   healthConditions?: string[];
   language?: string;
   permissions?: {
@@ -19,7 +31,9 @@ export type UserProfileAddon = {
     location: boolean;
   };
   linkedProfiles?: string[];
-}
+  fcmToken?: string | null;
+  notificationPreferences?: NotificationPreferences;
+};
 
 /**
  * Creates a user profile document in Firestore.
@@ -44,7 +58,7 @@ export function createUserProfile(
     userType: additionalData.userType || 'guardian',
     phone: additionalData.phone || user.phoneNumber || '',
     age: additionalData.age || null,
-    emergencyContacts: additionalData.emergencyContacts || [],
+    emergencyContacts: additionalData.emergencyContacts ?? [],
     healthConditions: additionalData.healthConditions || [],
     language: additionalData.language || 'en',
     permissions: additionalData.permissions || { vitals: true, location: true },

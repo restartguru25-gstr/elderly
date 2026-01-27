@@ -116,13 +116,14 @@ export function PhotoRestorer() {
           <div className="space-y-3">
             <h3 className="text-center font-semibold text-muted-foreground">Original</h3>
             <div className="relative aspect-video w-full overflow-hidden rounded-xl border-2 bg-secondary/20">
-              <Image 
-                src={originalImage} 
-                alt="Original photo" 
-                fill 
+              <Image
+                src={originalImage}
+                alt="Original photo"
+                fill
                 style={{ objectFit: 'contain' }}
                 loading="eager"
                 quality={90}
+                sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>
           </div>
@@ -135,22 +136,24 @@ export function PhotoRestorer() {
                   <p className="font-medium">Restoring your photo...</p>
                 </div>
               ) : restoredImage ? (
-                <Image 
-                  src={restoredImage} 
-                  alt="Restored photo" 
-                  fill 
+                <Image
+                  src={restoredImage}
+                  alt="Restored photo"
+                  fill
                   style={{ objectFit: 'contain' }}
                   loading="eager"
                   quality={90}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                 />
               ) : placeholder ? (
-                <Image 
-                  src={placeholder.imageUrl} 
-                  alt="Photo placeholder" 
-                  fill 
-                  style={{ objectFit: 'contain' }} 
+                <Image
+                  src={placeholder.imageUrl}
+                  alt="Photo placeholder"
+                  fill
+                  style={{ objectFit: 'contain' }}
                   data-ai-hint={placeholder.imageHint}
                   loading="lazy"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                 />
               ) : null}
             </div>

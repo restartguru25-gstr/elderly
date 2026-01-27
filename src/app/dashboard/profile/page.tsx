@@ -1,4 +1,5 @@
 import { ProfileForm } from '@/components/features/profile-form';
+import { PreferencesCard } from '@/components/features/preferences-card';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ProfilePage() {
@@ -19,6 +20,7 @@ export default function ProfilePage() {
           <ProfileForm />
         </CardContent>
       </Card>
+      <PreferencesCard />
     </div>
   );
 }

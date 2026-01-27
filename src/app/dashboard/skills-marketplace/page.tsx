@@ -20,7 +20,7 @@ import {
   useUser,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -181,7 +181,7 @@ export default function SkillsMarketplacePage() {
   const [activeCategory, setActiveCategory] = useState('all');
 
   const listingsQuery = useMemoFirebase(
-    () => query(collection(firestore, 'skillListings'), orderBy('createdAt', 'desc')),
+    () => query(collection(firestore, 'skillListings'), orderBy('createdAt', 'desc'), limit(20)),
     [firestore]
   );
   const { data: listings, isLoading } = useCollection<SkillListing>(listingsQuery);

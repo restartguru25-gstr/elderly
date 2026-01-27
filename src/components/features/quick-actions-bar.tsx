@@ -88,6 +88,8 @@ export function QuickActionsBar() {
                   : 'bg-gradient-primary text-white hover:scale-110'
               )}
               onClick={() => setIsExpanded(!isExpanded)}
+              aria-label={isExpanded ? 'Close quick actions' : 'Open quick actions'}
+              aria-expanded={isExpanded}
             >
               {isExpanded ? (
                 <X className="h-5 w-5 sm:h-6 sm:w-6" />

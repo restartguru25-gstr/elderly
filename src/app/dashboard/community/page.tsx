@@ -32,7 +32,7 @@ import {
   useUser,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -238,7 +238,7 @@ export default function CommunityPage() {
   const [activeCategory, setActiveCategory] = useState('all');
 
   const forumsQuery = useMemoFirebase(
-    () => query(collection(firestore, 'communityForums'), orderBy('createdAt', 'desc')),
+    () => query(collection(firestore, 'communityForums'), orderBy('createdAt', 'desc'), limit(20)),
     [firestore]
   );
   const { data: forums, isLoading } = useCollection<CommunityForum>(forumsQuery);
@@ -273,7 +273,7 @@ export default function CommunityPage() {
         ))}
       </div>
 
-      {/* Upcoming Events - Khyaal style */}
+      {/* Upcoming Events */}
       <Card className="border-2 shadow-soft">
         <CardHeader>
           <div className="flex items-center justify-between">

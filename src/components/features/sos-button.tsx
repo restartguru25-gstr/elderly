@@ -7,8 +7,8 @@ import Link from 'next/link';
 export function SOSButton() {
   return (
     <Button asChild variant="destructive" size="default" className="flex items-center gap-2 rounded-full animate-pulse">
-        <Link href="/dashboard/emergency">
-            <Siren className="h-5 w-5" />
+        <Link href="/dashboard/emergency" aria-label="Emergency SOS">
+            <Siren className="h-5 w-5" aria-hidden />
             <span className="hidden sm:inline">SOS</span>
         </Link>
     </Button>

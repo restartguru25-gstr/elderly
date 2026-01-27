@@ -111,12 +111,13 @@ export default function ToursPage() {
           </Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tours.map((tour) => {
+          {tours.map((tour, index) => {
             const image =
               PlaceHolderImages.find((p) => p.id === tour.imageId) ||
               PlaceHolderImages.find((p) => p.id === 'travel-golden-triangle') ||
               PlaceHolderImages[0];
             const TransportIcon = tour.transport;
+            const isFirst = index === 0;
 
             return (
               <Card
@@ -131,7 +132,8 @@ export default function ToursPage() {
                       fill
                       style={{ objectFit: 'cover' }}
                       className="transition-transform duration-300 group-hover:scale-105"
-                      loading="lazy"
+                      priority={isFirst}
+                      loading={isFirst ? undefined : 'lazy'}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

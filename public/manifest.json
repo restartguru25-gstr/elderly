@@ -1,0 +1,18 @@
+{
+  "name": "ElderLink — Your Happiness Club",
+  "short_name": "ElderLink",
+  "description": "India's most trusted digital companion for seniors and their families.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffbf7",
+  "theme_color": "#FF7A00",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ]
+}

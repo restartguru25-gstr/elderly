@@ -2,7 +2,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -12,12 +12,18 @@ import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import React, { useEffect } from 'react';
 import { Skeleton } from '../ui/skeleton';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserProfile } from '@/lib/user-actions';
+import { updateUserProfile, type EmergencyContact } from '@/lib/user-actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
+
+const emergencyContactSchema = z.object({
+  name: z.string().optional(),
+  mobile: z.string().optional().refine((s) => !s?.trim() || /^[0-9+\s-]{10,}$/.test(s.trim()), 'Enter a valid 10+ digit number.'),
+  relation: z.string().optional(),
+});
 
 const profileFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required.'),
@@ -25,7 +31,7 @@ const profileFormSchema = z.object({
   age: z.coerce.number().optional(),
   phone: z.string().optional(),
   language: z.string().optional(),
-  emergencyContacts: z.string().optional(),
+  emergencyContacts: z.array(emergencyContactSchema),
   healthConditions: z.string().optional(),
   permissions: z.object({
     vitals: z.boolean().default(true),
@@ -34,6 +40,20 @@ const profileFormSchema = z.object({
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
+const RELATION_OPTIONS = [
+  { value: 'Son', label: 'Son' },
+  { value: 'Daughter', label: 'Daughter' },
+  { value: 'Spouse', label: 'Spouse' },
+  { value: 'In-laws', label: 'In-laws' },
+  { value: 'Brother', label: 'Brother' },
+  { value: 'Sister', label: 'Sister' },
+  { value: 'Grandchild', label: 'Grandchild' },
+  { value: 'Friend', label: 'Friend' },
+  { value: 'Neighbour', label: 'Neighbour' },
+  { value: 'Caretaker', label: 'Caretaker' },
+  { value: 'Other', label: 'Other' },
+] as const;
 
 export function ProfileForm() {
   const { user, isUserLoading } = useUser();
@@ -55,40 +75,53 @@ export function ProfileForm() {
       age: undefined,
       phone: '',
       language: 'en',
-      emergencyContacts: '',
+      emergencyContacts: [],
       healthConditions: '',
       permissions: {
         vitals: true,
         location: true,
-      }
+      },
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'emergencyContacts',
+  });
+
   useEffect(() => {
-    if (userProfile) {
-      form.reset({
-        firstName: userProfile.firstName || '',
-        lastName: userProfile.lastName || '',
-        age: userProfile.age || undefined,
-        phone: userProfile.phone || '',
-        language: userProfile.language || 'en',
-        emergencyContacts: userProfile.emergencyContacts?.join('\n') || '',
-        healthConditions: userProfile.healthConditions?.join('\n') || '',
-        permissions: userProfile.permissions || { vitals: true, location: true },
-      });
-    }
+    if (!userProfile) return;
+    const raw = userProfile.emergencyContacts;
+    const contacts: EmergencyContact[] = Array.isArray(raw)
+      ? raw.filter((c): c is EmergencyContact => typeof c === 'object' && c !== null && 'mobile' in c && 'relation' in c)
+      : [];
+    form.reset({
+      firstName: userProfile.firstName || '',
+      lastName: userProfile.lastName || '',
+      age: userProfile.age || undefined,
+      phone: userProfile.phone || '',
+      language: userProfile.language || 'en',
+      emergencyContacts: contacts.length > 0 ? contacts : [],
+      healthConditions: userProfile.healthConditions?.join('\n') || '',
+      permissions: userProfile.permissions || { vitals: true, location: true },
+    });
   }, [userProfile, form]);
 
   function onSubmit(data: ProfileFormValues) {
     if (!user) return;
     setIsSaving(true);
-    
+    const contacts = data.emergencyContacts
+      .filter((c) => (c.mobile?.trim() ?? '') !== '' && (c.relation?.trim() ?? '') !== '')
+      .map((c) => ({
+        name: c.name?.trim() || undefined,
+        mobile: c.mobile!.trim(),
+        relation: c.relation!.trim(),
+      }));
     const updateData = {
-        ...data,
-        emergencyContacts: data.emergencyContacts?.split('\n').filter(c => c.trim() !== '') || [],
-        healthConditions: data.healthConditions?.split('\n').filter(c => c.trim() !== '') || [],
-    }
-
+      ...data,
+      emergencyContacts: contacts,
+      healthConditions: data.healthConditions?.split('\n').filter((c) => c.trim() !== '') || [],
+    };
     updateUserProfile(firestore, user.uid, updateData)
       .then(() => {
         toast({
@@ -212,8 +245,11 @@ export function ProfileForm() {
                     <SelectContent>
                       <SelectItem value="en">English</SelectItem>
                       <SelectItem value="hi">Hindi</SelectItem>
-                      <SelectItem value="bn">Bengali</SelectItem>
                       <SelectItem value="te">Telugu</SelectItem>
+                      <SelectItem value="ta">Tamil</SelectItem>
+                      <SelectItem value="kn">Kannada</SelectItem>
+                      <SelectItem value="ml">Malayalam</SelectItem>
+                      <SelectItem value="bn">Bengali</SelectItem>
                       <SelectItem value="mr">Marathi</SelectItem>
                     </SelectContent>
                   </Select>
@@ -225,26 +261,93 @@ export function ProfileForm() {
 
         <Separator />
 
-        <FormField
-          control={form.control}
-          name="emergencyContacts"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Emergency Contacts</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="e.g., Jane Doe (Daughter) - 555-1234, Mike Smith (Neighbor) - 555-5678. Add one contact per line."
-                  {...field}
-                  rows={4}
-                />
-              </FormControl>
-              <FormDescription>
-                List your emergency contacts, one per line. Include their name, relationship, and phone number.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-4">
+          <div>
+            <h3 className="mb-1 text-lg font-medium">Emergency Contacts</h3>
+            <p className="text-sm text-muted-foreground">
+              Add people to notify in an emergency. Include mobile number and relation.
+            </p>
+          </div>
+          {fields.map((field, index) => (
+            <div
+              key={field.id}
+              className="grid gap-4 rounded-xl border-2 border-border bg-muted/30 p-4 sm:grid-cols-12"
+            >
+              <FormField
+                control={form.control}
+                name={`emergencyContacts.${index}.name`}
+                render={({ field: f }) => (
+                  <FormItem className="sm:col-span-12 md:col-span-4">
+                    <FormLabel>Name (optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Ramesh" {...f} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`emergencyContacts.${index}.mobile`}
+                render={({ field: f }) => (
+                  <FormItem className="sm:col-span-12 md:col-span-4">
+                    <FormLabel>Mobile number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. 9876543210" type="tel" {...f} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`emergencyContacts.${index}.relation`}
+                render={({ field: f }) => (
+                  <FormItem className="sm:col-span-12 md:col-span-3">
+                    <FormLabel>Relation</FormLabel>
+                    <Select onValueChange={f.onChange} value={f.value ?? ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {RELATION_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex items-end sm:col-span-12 md:col-span-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => remove(index)}
+                  aria-label="Remove contact"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-2 border-dashed"
+            onClick={() => append({ name: '', mobile: '', relation: '' })}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add emergency contact
+          </Button>
+        </div>
+
         <FormField
           control={form.control}
           name="healthConditions"

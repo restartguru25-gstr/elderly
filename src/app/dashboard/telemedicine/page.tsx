@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -9,17 +8,40 @@ import { Input } from '@/components/ui/input';
 import { doctors } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Loader2, Search } from 'lucide-react';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { createAppointment } from '@/lib/telemedicine-actions';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { ParentSelector } from '@/components/features/parent-selector';
+import { useLinkedSenior } from '@/hooks/use-linked-senior';
+import { useTranslations } from 'next-intl';
 
 type Doctor = (typeof doctors)[0];
 
-function BookAppointmentButton({ doctor }: { doctor: Doctor }) {
+function BookAppointmentButton({
+  doctor,
+  patientId,
+  patientName,
+}: {
+  doctor: Doctor;
+  patientId?: string | null;
+  patientName?: string;
+}) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const t = useTranslations('guardian');
   const [isLoading, setIsLoading] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
@@ -28,35 +50,40 @@ function BookAppointmentButton({ doctor }: { doctor: Doctor }) {
       toast({ variant: 'destructive', title: 'Not Logged In', description: 'You must be logged in to book an appointment.' });
       return;
     }
+    const targetId = patientId || user.uid;
     setIsLoading(true);
-
-    createAppointment(firestore, user.uid, {
+    createAppointment(firestore, targetId, {
       doctorId: doctor.id,
       doctorName: doctor.name,
       specialty: doctor.specialty,
     })
       .then(() => {
         toast({
-          title: 'Appointment Booked!',
-          description: `Your appointment with ${doctor.name} has been confirmed.`,
+          title: t('appointmentBooked'),
+          description: patientName ? t('appointmentBookedDesc', { name: patientName }) : `Your appointment with ${doctor.name} has been confirmed.`,
         });
         setIsAlertOpen(false);
       })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      .catch(() => {
+        toast({ variant: 'destructive', title: t('permissionDenied'), description: t('permissionDeniedDesc') });
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
       <AlertDialogTrigger asChild>
-        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">Book Appointment</Button>
+        <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+          {patientId ? t('bookForParent') : 'Book Appointment'}
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirm Appointment</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to book an appointment with {doctor.name} ({doctor.specialty})?
+            {patientName ? t('bookAppointmentFor', { name: patientName }) : 'Book for yourself'}
+            {' — '}
+            {doctor.name} ({doctor.specialty})?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -72,18 +99,36 @@ function BookAppointmentButton({ doctor }: { doctor: Doctor }) {
 }
 
 export default function TelemedicinePage() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: userProfile } = useDoc(userDocRef);
+  const { linkedSeniors, selectedSeniorId, selectedSenior } = useLinkedSenior();
+
+  const isGuardian = userProfile?.userType === 'guardian';
+  const hasLinkedParent = isGuardian && linkedSeniors.length > 0 && selectedSeniorId;
+  const parentName = selectedSenior
+    ? [selectedSenior.firstName, selectedSenior.lastName].filter(Boolean).join(' ').trim() || 'Parent'
+    : 'Parent';
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="mb-2 text-3xl font-bold text-foreground">Telemedicine Services</h1>
-        <p className="max-w-2xl text-muted-foreground">
-          Book online, clinic, or home visit appointments with verified and trusted healthcare professionals.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold text-foreground">Telemedicine Services</h1>
+          <p className="max-w-2xl text-muted-foreground">
+            Book online, clinic, or home visit appointments with verified and trusted healthcare professionals.
+          </p>
+        </div>
+        {isGuardian && <ParentSelector />}
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-        <Input placeholder="Search by doctor name or specialty..." className="w-full max-w-lg pl-10" />
+        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+        <Input placeholder="Search by doctor name or specialty..." className="max-w-lg pl-10" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -92,15 +137,19 @@ export default function TelemedicinePage() {
           return (
             <Card key={doctor.id} className="flex flex-col">
               <CardHeader className="items-center text-center">
-                <Avatar className="h-24 w-24 mb-4">
+                <Avatar className="mb-4 h-24 w-24">
                   {image && <AvatarImage src={image.imageUrl} alt={doctor.name} data-ai-hint={image.imageHint} />}
                   <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <CardTitle>{doctor.name}</CardTitle>
                 <CardDescription>{doctor.specialty}</CardDescription>
               </CardHeader>
-              <CardContent className="flex-grow flex items-end justify-center">
-                <BookAppointmentButton doctor={doctor} />
+              <CardContent className="flex flex-grow items-end justify-center">
+                <BookAppointmentButton
+                  doctor={doctor}
+                  patientId={hasLinkedParent ? selectedSeniorId : null}
+                  patientName={hasLinkedParent ? parentName : undefined}
+                />
               </CardContent>
             </Card>
           );

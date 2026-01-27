@@ -28,7 +28,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { createVital } from '@/lib/vitals-actions';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -50,6 +51,8 @@ import { WithId } from '@/firebase/firestore/use-collection';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { ParentSelector } from '@/components/features/parent-selector';
+import { useLinkedSenior } from '@/hooks/use-linked-senior';
 
 const vitalSchema = z.object({
   type: z.enum(['blood_pressure', 'blood_sugar', 'spo2', 'weight'], {
@@ -93,6 +96,16 @@ export default function VitalsPage() {
   const { user } = useUser();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: userProfile } = useDoc(userDocRef);
+  const { linkedSeniors, selectedSeniorId } = useLinkedSenior();
+
+  const isGuardian = userProfile?.userType === 'guardian';
+  const viewUserId = isGuardian && linkedSeniors.length > 0 && selectedSeniorId ? selectedSeniorId : user?.uid ?? null;
+  const isGuardianView = isGuardian && !!selectedSeniorId;
 
   const form = useForm<VitalFormValues>({
     resolver: zodResolver(vitalSchema),
@@ -101,13 +114,13 @@ export default function VitalsPage() {
 
   const vitalsQuery = useMemoFirebase(
     () =>
-      user
+      viewUserId
         ? query(
-            collection(firestore, `users/${user.uid}/vitals`),
+            collection(firestore, `users/${viewUserId}/vitals`),
             orderBy('timestamp', 'desc')
           )
         : null,
-    [firestore, user]
+    [firestore, viewUserId]
   );
   const { data: vitals, isLoading } = useCollection<Vital>(vitalsQuery);
 
@@ -138,136 +151,142 @@ export default function VitalsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="mb-2 text-4xl font-bold text-foreground flex items-center gap-2">
-          <HeartPulse className="h-10 w-10 text-primary" />
-          Health & Vitals
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Track your vitals, build healthy habits, and win every day.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="mb-2 flex items-center gap-2 text-4xl font-bold text-foreground">
+            <HeartPulse className="h-10 w-10 text-primary" />
+            Health & Vitals
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            {isGuardianView ? "View your parent's vitals." : 'Track your vitals, build healthy habits, and win every day.'}
+          </p>
+        </div>
+        {isGuardian && <ParentSelector />}
       </div>
 
-      {/* Win Everyday - Gamification */}
-      <Card className="border-2 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden">
-        <CardContent className="p-6 sm:p-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-gradient-primary p-4">
-                <Trophy className="h-10 w-10 text-white" />
+      {/* Win Everyday - Gamification (senior only) */}
+      {!isGuardianView && (
+        <Card className="border-2 overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5">
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="rounded-2xl bg-gradient-primary p-4">
+                  <Trophy className="h-10 w-10 text-white" />
+                </div>
+                <div>
+                  <h2 className="flex items-center gap-2 text-2xl font-bold">
+                    Win every day
+                    <Sparkles className="h-6 w-6 text-primary" />
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Log your vitals daily. Stay active & healthy — get rewarded!
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  Win every day
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </h2>
-                <p className="text-muted-foreground">
-                  Log your vitals daily. Stay active & healthy — get rewarded!
-                </p>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-3 rounded-xl border-2 bg-background px-5 py-3">
+                  <Target className="h-8 w-8 text-primary" />
+                  <div>
+                    <div className="text-2xl font-bold">{todayCount}</div>
+                    <div className="text-xs text-muted-foreground">Logged today</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl border-2 bg-background px-5 py-3">
+                  <TrendingUp className="h-8 w-8 text-green-500" />
+                  <div>
+                    <div className="text-2xl font-bold">{streak} days</div>
+                    <div className="text-xs text-muted-foreground">Streak</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl border-2 bg-background px-5 py-3">
+                  <div className="rounded-full bg-green-500 p-2">
+                    <span className="text-lg font-bold text-white">{healthScore}%</span>
+                  </div>
+                  <div>
+                    <div className="font-bold">Health Score</div>
+                    <div className="text-xs text-muted-foreground">Great job!</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-3 rounded-xl border-2 bg-background px-5 py-3">
-                <Target className="h-8 w-8 text-primary" />
-                <div>
-                  <div className="text-2xl font-bold">{todayCount}</div>
-                  <div className="text-xs text-muted-foreground">Logged today</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border-2 bg-background px-5 py-3">
-                <TrendingUp className="h-8 w-8 text-green-500" />
-                <div>
-                  <div className="text-2xl font-bold">{streak} days</div>
-                  <div className="text-xs text-muted-foreground">Streak</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border-2 bg-background px-5 py-3">
-                <div className="rounded-full bg-green-500 p-2">
-                  <span className="text-lg font-bold text-white">{healthScore}%</span>
-                </div>
-                <div>
-                  <div className="font-bold">Health Score</div>
-                  <div className="text-xs text-muted-foreground">Great job!</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Log New Vital */}
-        <div className="lg:col-span-1">
-          <Card className="border-2 shadow-soft sticky top-24">
-            <CardHeader>
-              <CardTitle className="text-xl">Log New Vital</CardTitle>
-              <CardDescription>
-                Enter a new reading. Every log counts toward your streak!
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Vital Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {!isGuardianView && (
+          <div className="lg:col-span-1">
+            <Card className="border-2 shadow-soft sticky top-24">
+              <CardHeader>
+                <CardTitle className="text-xl">Log New Vital</CardTitle>
+                <CardDescription>
+                  Enter a new reading. Every log counts toward your streak!
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Vital Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a vital" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="blood_pressure">Blood Pressure</SelectItem>
+                              <SelectItem value="blood_sugar">Blood Sugar</SelectItem>
+                              <SelectItem value="spo2">SpO2</SelectItem>
+                              <SelectItem value="weight">Weight</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="value"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Value</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a vital" />
-                            </SelectTrigger>
+                            <Input placeholder="e.g., 120/80 or 95" {...field} />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="blood_pressure">Blood Pressure</SelectItem>
-                            <SelectItem value="blood_sugar">Blood Sugar</SelectItem>
-                            <SelectItem value="spo2">SpO2</SelectItem>
-                            <SelectItem value="weight">Weight</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="value"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Value</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., 120/80 or 95" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    variant="gradient"
-                    size="lg"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <>
-                        <PlusCircle className="h-5 w-5 mr-2" />
-                        Log Vital
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      variant="gradient"
+                      size="lg"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <PlusCircle className="mr-2 h-5 w-5" />
+                          Log Vital
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* History */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className={isGuardianView ? 'space-y-4 lg:col-span-3' : 'space-y-4 lg:col-span-2'}>
           <div className="flex items-center gap-2">
             <History className="h-6 w-6 text-primary" />
             <h2 className="text-2xl font-bold">Vitals History</h2>
@@ -333,12 +352,12 @@ export default function VitalsPage() {
                     <TableRow>
                       <TableCell
                         colSpan={3}
-                        className="text-center h-32 text-muted-foreground"
+                        className="h-32 text-center text-muted-foreground"
                       >
                         <div className="flex flex-col items-center gap-2">
                           <HeartPulse className="h-12 w-12 opacity-30" />
-                          <p>No vitals logged yet.</p>
-                          <p className="text-sm">Log your first vital to start your streak!</p>
+                          <p>{isGuardianView ? "No vitals logged yet for this parent." : 'No vitals logged yet.'}</p>
+                          {!isGuardianView && <p className="text-sm">Log your first vital to start your streak!</p>}
                         </div>
                       </TableCell>
                     </TableRow>

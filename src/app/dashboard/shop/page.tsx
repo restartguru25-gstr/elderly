@@ -125,11 +125,12 @@ export default function ShopPage() {
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product) => {
+        {products.map((product, index) => {
           const image =
             PlaceHolderImages.find((p) => p.id === product.imageId) ||
             PlaceHolderImages.find((p) => p.id === 'product-health-monitor') ||
             PlaceHolderImages[0];
+          const isFirst = index === 0;
 
           return (
             <Card
@@ -144,7 +145,8 @@ export default function ShopPage() {
                     fill
                     style={{ objectFit: 'cover' }}
                     className="transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
+                    priority={isFirst}
+                    loading={isFirst ? undefined : 'lazy'}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                   />
                   <Badge className="absolute top-3 right-3 bg-primary text-white">
