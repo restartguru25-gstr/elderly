@@ -12,6 +12,7 @@ import { ImageIcon, Sparkles, Share2, Heart, BookOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
+import { MemoryTimeline } from '@/components/features/memory-timeline';
 
 const PhotoRestorer = dynamic(
   () => import('@/components/features/photo-restorer').then((m) => ({ default: m.PhotoRestorer })),
@@ -114,6 +115,9 @@ export default function MemoryLanePage() {
           <PhotoRestorer />
         </CardContent>
       </Card>
+
+      {/* Dynamic memories */}
+      <MemoryTimeline />
 
       {/* Tips — dynamic i18n + staggered animations */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

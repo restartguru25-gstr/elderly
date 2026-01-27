@@ -100,9 +100,10 @@ export default function FamilyPage() {
         linkInput.trim(),
         user.uid
       );
+      const name = seniorName ?? 'Your parent';
       toast({
         title: t('linked'),
-        description: t('linkedDesc', { name: seniorName }),
+        description: t('linkedDesc', { name }),
       });
       setLinkInput('');
       loadLinked();

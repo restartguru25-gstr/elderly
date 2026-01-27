@@ -6,8 +6,13 @@ import { Download, X } from 'lucide-react';
 
 const PWA_INSTALL_DISMISSED = 'elderlink-pwa-install-dismissed';
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice?: Promise<{ outcome: 'accepted' | 'dismissed'; platform?: string }>;
+};
+
 export function PWAInstallBanner() {
-  const [deferredPrompt, setDeferredPrompt] = useState<{ prompt: () => Promise<{ outcome: string }> } | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -18,8 +23,9 @@ export function PWAInstallBanner() {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt({ prompt: () => (e as { prompt: () => Promise<{ outcome: string }> }).prompt() });
+      const evt = e as unknown as BeforeInstallPromptEvent;
+      evt.preventDefault();
+      setDeferredPrompt(evt);
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);

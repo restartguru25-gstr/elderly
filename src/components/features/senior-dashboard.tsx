@@ -8,6 +8,7 @@ import { DailyCheckinCard } from './daily-checkin-card';
 import { MoodTracker } from './mood-tracker';
 import { RewardsCoins } from './rewards-coins';
 import { HealthInsightsCard } from './health-insights-card';
+import { GamificationCard } from './gamification-card';
 import { RemindersCard } from './reminders-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

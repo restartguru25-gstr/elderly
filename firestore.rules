@@ -245,6 +245,17 @@ service cloud.firestore {
       }
 
       /**
+       * @description Memory Lane entries (stories/photos) for a user.
+       * @path /users/{userId}/memories/{memoryId}
+       * @principle Owner can do everything. Linked guardians can read (to view parent's memories).
+       */
+      match /memories/{memoryId} {
+        allow get, list: if isOwner(userId) || isLinkedGuardianWithPermission(userId, 'vitals');
+        allow create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+
+      /**
        * @description Reminders from guardians to senior.
        * @path /users/{userId}/reminders/{reminderId}
        * @principle Senior can read/update (mark read). Linked guardians can create.

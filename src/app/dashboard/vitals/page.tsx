@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -145,8 +145,31 @@ export default function VitalsPage() {
     return d.toDateString() === today.toDateString();
   }).length ?? 0;
 
-  const streak = 7; // Placeholder - could be computed from actual data
-  const healthScore = 95;
+  const streak = useMemo(() => {
+    const days = new Set<string>();
+    for (const v of vitals ?? []) {
+      if (!v.timestamp) continue;
+      days.add(v.timestamp.toDate().toDateString());
+    }
+    let s = 0;
+    const d = new Date();
+    // consecutive days ending today
+    while (days.has(d.toDateString())) {
+      s += 1;
+      d.setDate(d.getDate() - 1);
+    }
+    return s;
+  }, [vitals]);
+
+  const healthScore = useMemo(() => {
+    const vCount = vitals?.length ?? 0;
+    // Simple heuristic: streak + consistency → score in 0..100
+    const base = 50;
+    const fromStreak = Math.min(30, streak * 5);
+    const fromToday = Math.min(10, todayCount * 5);
+    const fromVolume = Math.min(10, Math.floor(vCount / 10) * 2);
+    return Math.max(0, Math.min(100, base + fromStreak + fromToday + fromVolume));
+  }, [streak, todayCount, vitals]);
 
   return (
     <div className="space-y-8">

@@ -47,7 +47,10 @@ export function MoodTracker() {
     setIsLoading(true);
     setAnalysis(null);
     try {
-      const result = await trackMoodWithNLP({ moodCheckIn: values.moodCheckIn });
+      const result = await trackMoodWithNLP({
+        moodCheckIn: values.moodCheckIn,
+        guardianNotificationThreshold: -0.5,
+      });
       
       await createMoodCheckin(firestore, user.uid, {
         notes: values.moodCheckIn,

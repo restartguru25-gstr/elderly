@@ -180,7 +180,7 @@ export function GuardianDashboard({ userProfile }: { userProfile: UserProfile })
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">
-          {tDash.hello}, {userProfile.firstName}! 👋
+          {tDash('hello')}, {userProfile.firstName}! 👋
         </h1>
         <Card className="border-2">
           <CardHeader>
@@ -203,9 +203,9 @@ export function GuardianDashboard({ userProfile }: { userProfile: UserProfile })
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="mb-2 text-4xl font-bold sm:text-5xl lg:text-6xl">
-              {tDash.hello}, {userProfile.firstName}! 👋
+              {tDash('hello')}, {userProfile.firstName}! 👋
             </h1>
-            <p className="text-lg text-muted-foreground sm:text-xl">{tDash.guardianSubtitle}</p>
+            <p className="text-lg text-muted-foreground sm:text-xl">{tDash('guardianSubtitle')}</p>
           </div>
           <ParentSelector />
         </div>
@@ -217,7 +217,7 @@ export function GuardianDashboard({ userProfile }: { userProfile: UserProfile })
                 <TrendingUp className="h-5 w-5 text-green-600 sm:h-6 sm:w-6" />
               </div>
               <div className="text-2xl font-bold sm:text-3xl">{healthScore ?? '—'}%</div>
-              <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{tDash.healthScore}</div>
+              <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{tDash('healthScore')}</div>
             </CardContent>
           </Card>
           <Card className="border-2 transition-colors hover:border-primary/50">
@@ -226,7 +226,7 @@ export function GuardianDashboard({ userProfile }: { userProfile: UserProfile })
                 <Pill className="h-5 w-5 text-primary sm:h-6 sm:w-6" />
               </div>
               <div className="text-2xl font-bold sm:text-3xl">{medsStatus}</div>
-              <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{tDash.medications}</div>
+              <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{tDash('medications')}</div>
             </CardContent>
           </Card>
           <Card className="border-2 transition-colors hover:border-primary/50">
@@ -235,7 +235,7 @@ export function GuardianDashboard({ userProfile }: { userProfile: UserProfile })
                 <HeartPulse className="h-5 w-5 text-blue-600 sm:h-6 sm:w-6" />
               </div>
               <div className="text-2xl font-bold sm:text-3xl">{vitals?.length ?? 0}</div>
-              <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{tDash.activities}</div>
+              <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{tDash('activities')}</div>
             </CardContent>
           </Card>
         </div>
