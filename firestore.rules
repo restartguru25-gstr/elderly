@@ -105,15 +105,13 @@ service cloud.firestore {
      * @param permissionType 'vitals' or 'location' - the permission to check
      */
     function isLinkedGuardianWithPermission(userId, permissionType) {
-      if (!isSignedIn()) return false;
-      let seniorProfile = get(/databases/$(database)/documents/users/$(userId)).data;
-      // Check if guardian is in senior's linkedProfiles
-      if (!(request.auth.uid in (seniorProfile.linkedProfiles != null ? seniorProfile.linkedProfiles : []))) {
-        return false;
-      }
-      // Check if permission is granted (defaults to true if not set)
-      let permissions = seniorProfile.permissions != null ? seniorProfile.permissions : {};
-      return permissions[permissionType] != null ? permissions[permissionType] : true;
+      // Rules language doesn't support JS-style `if` blocks or `let`.
+      // Keep this as a pure boolean expression.
+      return isSignedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/users/$(userId)).data.get('linkedProfiles', [])
+        && (
+          get(/databases/$(database)/documents/users/$(userId)).data.get('permissions', {}).get(permissionType, true)
+        );
     }
 
 
