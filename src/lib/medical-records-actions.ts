@@ -12,6 +12,7 @@ import {
   getDownloadURL,
 } from 'firebase/storage';
 import { addDocumentNonBlocking } from '@/firebase';
+import { makeSearchTokens } from '@/lib/search-tokens';
 
 /**
  * Uploads a medical document to Firebase Storage and creates a corresponding
@@ -42,6 +43,7 @@ export async function uploadMedicalDocument(
     fileName: file.name,
     fileUrl,
     fileType: file.type,
+    searchTokens: makeSearchTokens(file.name),
     createdAt: serverTimestamp(),
   };
 

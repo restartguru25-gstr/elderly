@@ -118,7 +118,7 @@ export function PhotoRestorer() {
             <div className="relative aspect-video w-full overflow-hidden rounded-xl border-2 bg-secondary/20">
               <Image
                 src={originalImage}
-                alt="Original photo"
+                alt="Original uploaded photo"
                 fill
                 style={{ objectFit: 'contain' }}
                 loading="eager"
@@ -138,7 +138,7 @@ export function PhotoRestorer() {
               ) : restoredImage ? (
                 <Image
                   src={restoredImage}
-                  alt="Restored photo"
+                  alt="Restored photo (AI enhanced)"
                   fill
                   style={{ objectFit: 'contain' }}
                   loading="eager"
@@ -148,7 +148,7 @@ export function PhotoRestorer() {
               ) : placeholder ? (
                 <Image
                   src={placeholder.imageUrl}
-                  alt="Photo placeholder"
+                  alt="Example photo placeholder"
                   fill
                   style={{ objectFit: 'contain' }}
                   data-ai-hint={placeholder.imageHint}

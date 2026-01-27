@@ -8,6 +8,7 @@ import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { getHealthInsights } from '@/app/actions/health-insights';
 import { Sparkles, Loader2 } from 'lucide-react';
+import { withTimeout } from '@/lib/timeout';
 
 type Vital = { type: string; value: string; timestamp?: { toDate: () => Date } };
 
@@ -44,7 +45,7 @@ export function HealthInsightsCard() {
     const summary = buildSummary();
     setLoading(true);
     try {
-      const result = await getHealthInsights(summary);
+      const result = await withTimeout(getHealthInsights(summary), 20_000, 'AI insights timed out. Please try again.');
       setInsights(result);
     } catch {
       setInsights({

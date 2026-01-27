@@ -23,6 +23,7 @@ import { doc, collection, query, orderBy, where } from 'firebase/firestore';
 import { useLinkedSenior } from '@/hooks/use-linked-senior';
 import { ParentSelector } from './parent-selector';
 import { createReminder } from '@/lib/reminder-actions';
+import { enqueueOfflineAction, isProbablyOfflineError } from '@/lib/offline-queue';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useState } from 'react';
@@ -153,15 +154,49 @@ export function GuardianDashboard({ userProfile }: { userProfile: UserProfile })
     if (!user || !selectedSeniorId || !remindMessage.trim()) return;
     setRemindSending(true);
     try {
-      await createReminder(firestore, selectedSeniorId, {
+      const reminder = {
         fromGuardianId: user.uid,
         fromGuardianName: user.displayName || user.email || undefined,
         message: remindMessage.trim(),
+      };
+
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        enqueueOfflineAction({
+          userId: user.uid,
+          type: 'createReminder',
+          payload: { seniorId: selectedSeniorId, reminder },
+        });
+        toast({ title: 'Saved offline', description: 'We will send this reminder when you are back online.' });
+        setRemindMessage('');
+        setRemindOpen(false);
+        return;
+      }
+
+      await createReminder(firestore, selectedSeniorId, {
+        ...reminder,
       });
       toast({ title: t('reminderSent'), description: t('reminderSentDesc', { name: parentName }) });
       setRemindMessage('');
       setRemindOpen(false);
     } catch (e) {
+      if (isProbablyOfflineError(e)) {
+        enqueueOfflineAction({
+          userId: user.uid,
+          type: 'createReminder',
+          payload: {
+            seniorId: selectedSeniorId,
+            reminder: {
+              fromGuardianId: user.uid,
+              fromGuardianName: user.displayName || user.email || undefined,
+              message: remindMessage.trim(),
+            },
+          },
+        });
+        toast({ title: 'Saved offline', description: 'We will send this reminder when you are back online.' });
+        setRemindMessage('');
+        setRemindOpen(false);
+        return;
+      }
       toast({ variant: 'destructive', title: t('permissionDenied'), description: t('permissionDeniedDesc') });
     } finally {
       setRemindSending(false);

@@ -9,6 +9,7 @@ import {
   arrayUnion,
 } from 'firebase/firestore';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { makeSearchTokens } from '@/lib/search-tokens';
 
 type CommunityForumData = {
   name: string;
@@ -31,6 +32,7 @@ export function createCommunityForum(
   const data = {
     ...forumData,
     memberIds: [userId], // Creator is the first member
+    searchTokens: makeSearchTokens(`${forumData.name} ${forumData.interest}`),
     createdAt: serverTimestamp(),
   };
 

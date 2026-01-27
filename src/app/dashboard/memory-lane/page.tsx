@@ -12,7 +12,6 @@ import { ImageIcon, Sparkles, Share2, Heart, BookOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import { MemoryTimeline } from '@/components/features/memory-timeline';
 
 const PhotoRestorer = dynamic(
   () => import('@/components/features/photo-restorer').then((m) => ({ default: m.PhotoRestorer })),
@@ -23,6 +22,25 @@ const PhotoRestorer = dynamic(
         <Skeleton className="h-4 w-48" />
         <Skeleton className="h-4 w-32" />
       </div>
+    ),
+    ssr: false,
+  }
+);
+
+const MemoryTimeline = dynamic(
+  () => import('@/components/features/memory-timeline').then((m) => ({ default: m.MemoryTimeline })),
+  {
+    loading: () => (
+      <Card className="border-2 shadow-soft-lg">
+        <CardHeader>
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="mt-2 h-4 w-72 max-w-full" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </CardContent>
+      </Card>
     ),
     ssr: false,
   }

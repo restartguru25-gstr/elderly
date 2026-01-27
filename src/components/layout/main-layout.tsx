@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, MessageSquare, Smartphone } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, MessageSquare, Smartphone, Search as SearchIcon } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Logo } from '@/components/logo';
@@ -44,6 +44,7 @@ const navItems = [
   { href: '/dashboard', icon: Home, key: 'dashboard' },
   { href: '/dashboard/profile', icon: User, key: 'profile' },
   { href: '/dashboard/family', icon: UsersRound, key: 'family' },
+  { href: '/dashboard/search', icon: SearchIcon, key: 'search' },
   { href: '/dashboard/memory-lane', icon: Image, key: 'memoryLane' },
   { href: '/dashboard/telemedicine', icon: Stethoscope, key: 'telemedicine' },
   { href: '/dashboard/medications', icon: Pill, key: 'medications' },

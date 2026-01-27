@@ -264,6 +264,18 @@ service cloud.firestore {
         allow update: if isExistingOwner(userId);
         allow delete: if isExistingOwner(userId);
       }
+
+      /**
+       * @description User notification inbox (community, reminders, etc.)
+       * @path /users/{userId}/notifications/{notificationId}
+       * @principle Only the owner can read/update (mark read). Writes typically come from server/admin.
+       */
+      match /notifications/{notificationId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
+        allow delete: if isExistingOwner(userId);
+      }
     }
 
     /**

@@ -1,13 +1,48 @@
 'use client';
 
 import Link from 'next/link';
-import { GuardianDashboard } from '@/components/features/guardian-dashboard';
-import { SeniorDashboard } from '@/components/features/senior-dashboard';
-import { OnboardingModal } from '@/components/features/onboarding-modal';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
+
+const OnboardingModal = dynamic(
+  () => import('@/components/features/onboarding-modal').then((m) => ({ default: m.OnboardingModal })),
+  { ssr: false }
+);
+
+const SeniorDashboard = dynamic(
+  () => import('@/components/features/senior-dashboard').then((m) => ({ default: m.SeniorDashboard })),
+  {
+    loading: () => (
+      <div className="space-y-8">
+        <Skeleton className="h-10 w-64 max-w-full" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Skeleton className="h-64 w-full rounded-xl lg:col-span-2" />
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
+      </div>
+    ),
+    ssr: false,
+  }
+);
+
+const GuardianDashboard = dynamic(
+  () => import('@/components/features/guardian-dashboard').then((m) => ({ default: m.GuardianDashboard })),
+  {
+    loading: () => (
+      <div className="space-y-8">
+        <Skeleton className="h-10 w-64 max-w-full" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Skeleton className="h-64 w-full rounded-xl lg:col-span-2" />
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();

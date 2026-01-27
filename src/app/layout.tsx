@@ -9,8 +9,10 @@ import { SkipToContent } from '@/components/skip-to-content';
 import { WebVitalsReport } from '@/components/web-vitals-report';
 import { OfflineBanner } from '@/components/features/offline-banner';
 import { PWAInstallBanner } from '@/components/features/pwa-install-banner';
+import { OfflineQueueProcessor } from '@/components/features/offline-queue-processor';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
+import { ReactQueryProvider } from '@/components/providers/react-query-provider';
 
 export const metadata: Metadata = {
   title: 'ElderLink — Your Happiness Club',
@@ -66,14 +68,17 @@ export default async function RootLayout({
           <OfflineBanner />
           <PWAInstallBanner />
           <WebVitalsReport />
-          <FirebaseClientProvider>
-            <SidebarProvider>
-              <ErrorBoundary>
-                {children}
-              </ErrorBoundary>
-            </SidebarProvider>
-            <ClientOnlyToaster />
-          </FirebaseClientProvider>
+          <ReactQueryProvider>
+            <FirebaseClientProvider>
+              <SidebarProvider>
+                <ErrorBoundary>
+                  {children}
+                </ErrorBoundary>
+              </SidebarProvider>
+              <OfflineQueueProcessor />
+              <ClientOnlyToaster />
+            </FirebaseClientProvider>
+          </ReactQueryProvider>
         </NextIntlClientProvider>
       </body>
     </html>

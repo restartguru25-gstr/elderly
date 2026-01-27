@@ -29,44 +29,18 @@ import Image from 'next/image';
 import {
   useCollection,
   useFirestore,
-  useUser,
   useMemoFirebase,
 } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { createCommunityForum } from '@/lib/community-actions';
 import { WithId } from '@/firebase/firestore/use-collection';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 
-const forumSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters.'),
-  description: z.string().min(10, 'Description is too short.'),
-  interest: z.string().min(2, 'Interest is required.'),
-});
-
-type ForumFormValues = z.infer<typeof forumSchema>;
+const CreateForumDialog = dynamic(
+  () => import('@/components/features/create-forum-dialog').then((m) => ({ default: m.CreateForumDialog })),
+  { ssr: false }
+);
 
 type CommunityForum = {
   name: string;
@@ -91,105 +65,6 @@ const upcomingEvents = [
   { id: '3', title: 'Tombola & Fun Games', category: 'games', time: '3:00 PM', live: false, participants: 32 },
   { id: '4', title: 'Guided Meditation', category: 'meditation', time: '6:00 PM', live: false, participants: 15 },
 ];
-
-function CreateForumDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const form = useForm<ForumFormValues>({
-    resolver: zodResolver(forumSchema),
-    defaultValues: { name: '', description: '', interest: '' },
-  });
-
-  const onSubmit = (values: ForumFormValues) => {
-    if (!user) return;
-    setIsSubmitting(true);
-    createCommunityForum(firestore, user.uid, { ...values, imageId: 'community-books' })
-      .then(() => {
-        toast({
-          title: 'Forum Created!',
-          description: `${values.name} is now live.`,
-        });
-        form.reset();
-        onOpenChange(false);
-      })
-      .finally(() => setIsSubmitting(false));
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="gradient" size="lg">
-          <PlusCircle className="mr-2 h-5 w-5" />
-          Create New Forum
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create a New Community Forum</DialogTitle>
-          <DialogDescription>
-            Start a new group to connect with others who share your interests.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Forum Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Morning Walkers Club" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="What is this forum about?" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="interest"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Main Interest</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Fitness" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" variant="gradient" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Forum
-            </Button>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function ForumCard({ group }: { group: WithId<CommunityForum> }) {
   const image = PlaceHolderImages.find((p) => p.id === group.imageId) || PlaceHolderImages.find((p) => p.id === 'community-yoga');

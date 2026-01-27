@@ -28,10 +28,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { useCollection, useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { usePaginatedCollection, useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { createVital } from '@/lib/vitals-actions';
 import { useToast } from '@/hooks/use-toast';
+import { enqueueOfflineAction, isProbablyOfflineError } from '@/lib/offline-queue';
 import {
   Loader2,
   PlusCircle,
@@ -53,6 +54,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { ParentSelector } from '@/components/features/parent-selector';
 import { useLinkedSenior } from '@/hooks/use-linked-senior';
+import { downloadBlob, toCsv } from '@/lib/export-utils';
+import { getDocs, limit as qLimit, startAfter } from 'firebase/firestore';
 
 const vitalSchema = z.object({
   type: z.enum(['blood_pressure', 'blood_sugar', 'spo2', 'weight'], {
@@ -122,20 +125,89 @@ export default function VitalsPage() {
         : null,
     [firestore, viewUserId]
   );
-  const { data: vitals, isLoading } = useCollection<Vital>(vitalsQuery);
+  const {
+    data: vitals,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+  } = usePaginatedCollection<Vital>(vitalsQuery, { pageSize: 20 });
 
-  const onSubmit = (values: VitalFormValues) => {
+  const handleExportCsv = async () => {
+    if (!viewUserId) return;
+    try {
+      const rows: Array<Record<string, unknown>> = [];
+      let last: any = null;
+      for (;;) {
+        const base = query(
+          collection(firestore, `users/${viewUserId}/vitals`),
+          orderBy('timestamp', 'desc'),
+          ...(last ? [startAfter(last)] : []),
+          qLimit(500)
+        );
+        const snap = await getDocs(base);
+        for (const d of snap.docs) {
+          const v = d.data() as any;
+          rows.push({
+            id: d.id,
+            type: v.type,
+            value: v.value,
+            timestamp: v.timestamp?.toDate ? v.timestamp.toDate().toISOString() : '',
+          });
+        }
+        if (snap.size < 500) break;
+        last = snap.docs[snap.docs.length - 1];
+      }
+      const csv = toCsv(rows);
+      downloadBlob(`elderlink-vitals-${viewUserId}.csv`, new Blob([csv], { type: 'text/csv' }));
+      toast({ title: 'Export ready', description: 'Vitals CSV downloaded.' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Export failed', description: 'Please try again.' });
+    }
+  };
+
+  const onSubmit = async (values: VitalFormValues) => {
     if (!user) return;
     setIsSubmitting(true);
-    createVital(firestore, user.uid, values as any)
-      .then(() => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        enqueueOfflineAction({
+          userId: user.uid,
+          type: 'createVital',
+          payload: { vital: values as any },
+        });
         toast({
-          title: 'Vital Logged! 🎉',
-          description: `Your ${vitalLabels[values.type]} has been saved. Keep winning every day!`,
+          title: 'Saved offline',
+          description: 'We will sync this vital when you are back online.',
         });
         form.reset();
-      })
-      .finally(() => setIsSubmitting(false));
+        return;
+      }
+
+      await createVital(firestore, user.uid, values as any);
+      toast({
+        title: 'Vital Logged! 🎉',
+        description: `Your ${vitalLabels[values.type]} has been saved. Keep winning every day!`,
+      });
+      form.reset();
+    } catch (e) {
+      if (isProbablyOfflineError(e)) {
+        enqueueOfflineAction({
+          userId: user.uid,
+          type: 'createVital',
+          payload: { vital: values as any },
+        });
+        toast({
+          title: 'Saved offline',
+          description: 'We will sync this vital when you are back online.',
+        });
+        form.reset();
+      } else {
+        toast({ variant: 'destructive', title: 'Could not save', description: 'Please try again.' });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const todayCount = vitals?.filter((v) => {
@@ -310,9 +382,14 @@ export default function VitalsPage() {
 
         {/* History */}
         <div className={isGuardianView ? 'space-y-4 lg:col-span-3' : 'space-y-4 lg:col-span-2'}>
-          <div className="flex items-center gap-2">
-            <History className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-bold">Vitals History</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <History className="h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold">Vitals History</h2>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleExportCsv}>
+              Export CSV
+            </Button>
           </div>
           <Card className="border-2 overflow-hidden">
             <CardContent className="p-0">
@@ -388,6 +465,14 @@ export default function VitalsPage() {
                 </TableBody>
               </Table>
             </CardContent>
+            {hasMore && (
+              <div className="flex justify-center border-t p-4">
+                <Button variant="outline" onClick={() => void loadMore()} disabled={isLoadingMore}>
+                  {isLoadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Load more
+                </Button>
+              </div>
+            )}
           </Card>
         </div>
       </div>

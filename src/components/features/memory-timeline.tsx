@@ -222,7 +222,7 @@ export function MemoryTimeline() {
                   <div className="mt-3 overflow-hidden rounded-xl border">
                     <Image
                       src={m.photoUrl}
-                      alt={m.title}
+                      alt={`Memory photo: ${m.title}`}
                       width={1200}
                       height={800}
                       className="h-auto w-full object-cover"

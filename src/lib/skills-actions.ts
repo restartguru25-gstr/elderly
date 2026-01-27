@@ -3,6 +3,7 @@
 
 import { collection, serverTimestamp, Firestore } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase';
+import { makeSearchTokens } from '@/lib/search-tokens';
 
 type SkillListingData = {
   title: string;
@@ -27,6 +28,7 @@ export function createSkillListing(
     authorId,
     authorName,
     ...listingData,
+    searchTokens: makeSearchTokens(`${listingData.title} ${listingData.category}`),
     createdAt: serverTimestamp(),
   };
 

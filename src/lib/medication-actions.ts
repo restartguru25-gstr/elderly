@@ -8,6 +8,9 @@ type MedicationData = {
   name: string;
   dosage: string;
   schedule: string;
+  reminderEnabled?: boolean;
+  reminderTimes?: string[]; // HH:MM (24h)
+  timezone?: string;
 };
 
 export function createMedication(
@@ -17,7 +20,14 @@ export function createMedication(
 ) {
   if (!userId) throw new Error('User ID is required to add a medication.');
   const col = collection(firestore, 'users', userId, 'medications');
-  const data = { userId, ...medicationData, createdAt: serverTimestamp() };
+  const data = {
+    userId,
+    ...medicationData,
+    reminderEnabled: medicationData.reminderEnabled ?? false,
+    reminderTimes: Array.isArray(medicationData.reminderTimes) ? medicationData.reminderTimes : [],
+    timezone: medicationData.timezone ?? 'Asia/Kolkata',
+    createdAt: serverTimestamp(),
+  };
   return addDocumentNonBlocking(col, data);
 }
 

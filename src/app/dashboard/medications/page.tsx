@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useCollection, useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { useCollection, usePaginatedCollection, useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { createMedication, logMedication } from '@/lib/medication-actions';
 import { withRetry } from '@/lib/retry';
@@ -35,11 +35,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ParentSelector } from '@/components/features/parent-selector';
 import { useLinkedSenior } from '@/hooks/use-linked-senior';
 import { Badge } from '@/components/ui/badge';
+import { enqueueOfflineAction, isProbablyOfflineError } from '@/lib/offline-queue';
+import { Switch } from '@/components/ui/switch';
+import { downloadBlob, toCsv } from '@/lib/export-utils';
+import { getDocs, limit as qLimit, query as q, startAfter } from 'firebase/firestore';
 
 const medicationSchema = z.object({
   name: z.string().min(1, 'Medication name is required.'),
   dosage: z.string().min(1, 'Dosage is required.'),
   schedule: z.string().min(1, 'Schedule is required.'),
+  reminderEnabled: z.boolean().optional().default(false),
+  reminderTimes: z
+    .array(z.string())
+    .optional()
+    .default([])
+    .refine(
+      (times) => times.every((t) => /^\d{2}:\d{2}$/.test(t)),
+      'Reminder times must be HH:MM'
+    ),
 });
 
 type MedicationFormValues = z.infer<typeof medicationSchema>;
@@ -48,6 +61,9 @@ type Medication = {
   name: string;
   dosage: string;
   schedule: string;
+  reminderEnabled?: boolean;
+  reminderTimes?: string[];
+  timezone?: string;
   userId: string;
   createdAt: any;
 };
@@ -80,7 +96,23 @@ function MedicationCard({
     setOptimisticLog({ taken });
     setIsLogging(true);
     const today = format(new Date(), 'yyyy-MM-dd');
-    withRetry(() => logMedication(firestore, user.uid, medication.id, { taken, date: today }), { attempts: 3, delayMs: 800 })
+    const action = { taken, date: today };
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      enqueueOfflineAction({
+        userId: user.uid,
+        type: 'logMedication',
+        payload: { medicationId: medication.id, log: action },
+      });
+      toast({
+        title: 'Saved offline',
+        description: 'We will sync this medication log when you are back online.',
+      });
+      setIsLogging(false);
+      return;
+    }
+
+    withRetry(() => logMedication(firestore, user.uid, medication.id, action), { attempts: 3, delayMs: 800 })
       .then(() => {
         toast({
           title: `Medication ${taken ? 'Logged' : 'Marked as Skipped'}`,
@@ -88,9 +120,25 @@ function MedicationCard({
         });
         setOptimisticLog(null);
       })
-      .catch(() => {
+      .catch((e) => {
+        if (isProbablyOfflineError(e)) {
+          enqueueOfflineAction({
+            userId: user.uid,
+            type: 'logMedication',
+            payload: { medicationId: medication.id, log: action },
+          });
+          toast({
+            title: 'Saved offline',
+            description: 'We will sync this medication log when you are back online.',
+          });
+          return;
+        }
         setOptimisticLog(null);
-        toast({ variant: 'destructive', title: 'Update failed', description: 'Could not save. Check connection and try again.' });
+        toast({
+          variant: 'destructive',
+          title: 'Update failed',
+          description: 'Could not save. Check connection and try again.',
+        });
       })
       .finally(() => setIsLogging(false));
   };
@@ -115,6 +163,11 @@ function MedicationCard({
         </div>
       </CardHeader>
       <CardContent>
+        {medication.reminderEnabled && medication.reminderTimes?.length ? (
+          <p className="text-xs text-muted-foreground">
+            Reminders: {medication.reminderTimes.slice(0, 3).join(', ')}
+          </p>
+        ) : null}
         {readOnly ? (
           <p className="text-sm text-muted-foreground">
             Today: {wasTakenToday ? (
@@ -171,7 +224,7 @@ export default function MedicationsPage() {
 
   const form = useForm<MedicationFormValues>({
     resolver: zodResolver(medicationSchema),
-    defaultValues: { name: '', dosage: '', schedule: '' },
+    defaultValues: { name: '', dosage: '', schedule: '', reminderEnabled: false, reminderTimes: [] },
   });
 
   const medicationsQuery = useMemoFirebase(
@@ -181,7 +234,13 @@ export default function MedicationsPage() {
         : null,
     [firestore, viewUserId]
   );
-  const { data: medications, isLoading: medicationsLoading } = useCollection<Medication>(medicationsQuery);
+  const {
+    data: medications,
+    isLoading: medicationsLoading,
+    isLoadingMore: medicationsLoadingMore,
+    hasMore: medicationsHasMore,
+    loadMore: loadMoreMedications,
+  } = usePaginatedCollection<Medication>(medicationsQuery, { pageSize: 20 });
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const logsQuery = useMemoFirebase(
@@ -193,6 +252,63 @@ export default function MedicationsPage() {
   );
   const { data: medicationLogs, isLoading: logsLoading } = useCollection<MedicationLog>(logsQuery);
 
+  const handleExportCsv = async () => {
+    if (!viewUserId) return;
+    try {
+      // Export medications
+      const medRows: Array<Record<string, unknown>> = [];
+      let lastMed: any = null;
+      for (;;) {
+        const qMed = q(
+          collection(firestore, `users/${viewUserId}/medications`),
+          orderBy('createdAt', 'desc'),
+          ...(lastMed ? [startAfter(lastMed)] : []),
+          qLimit(500)
+        );
+        const snap = await getDocs(qMed);
+        for (const d of snap.docs) {
+          const m = d.data() as any;
+          medRows.push({
+            id: d.id,
+            name: m.name,
+            dosage: m.dosage,
+            schedule: m.schedule,
+            reminderEnabled: m.reminderEnabled ?? false,
+            reminderTimes: Array.isArray(m.reminderTimes) ? m.reminderTimes.join('|') : '',
+            createdAt: m.createdAt?.toDate ? m.createdAt.toDate().toISOString() : '',
+          });
+        }
+        if (snap.size < 500) break;
+        lastMed = snap.docs[snap.docs.length - 1];
+      }
+
+      // Export recent medication logs (last 90 days) – simple full scan by date string not feasible without orderBy index; export what we can list
+      const logRows: Array<Record<string, unknown>> = [];
+      const logsSnap = await getDocs(q(collection(firestore, `users/${viewUserId}/medication_logs`), qLimit(2000)));
+      for (const d of logsSnap.docs) {
+        const l = d.data() as any;
+        logRows.push({
+          id: d.id,
+          medicationId: l.medicationId,
+          date: l.date,
+          taken: l.taken,
+          timestamp: l.timestamp?.toDate ? l.timestamp.toDate().toISOString() : '',
+        });
+      }
+
+      const csv = toCsv([
+        { section: 'medications' },
+        ...medRows,
+        { section: 'medication_logs' },
+        ...logRows,
+      ]);
+      downloadBlob(`elderlink-medications-${viewUserId}.csv`, new Blob([csv], { type: 'text/csv' }));
+      toast({ title: 'Export ready', description: 'Medications CSV downloaded.' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Export failed', description: 'Please try again.' });
+    }
+  };
+
   const getLogForMedication = (medicationId: string) => {
     if (!medicationLogs) return undefined;
     return medicationLogs.find((log) => log.medicationId === medicationId);
@@ -201,7 +317,9 @@ export default function MedicationsPage() {
   const onSubmit = (values: MedicationFormValues) => {
     if (!user) return;
     setIsSubmitting(true);
-    createMedication(firestore, user.uid, values)
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata';
+    const times = values.reminderEnabled ? (values.reminderTimes ?? []).filter(Boolean).slice(0, 3) : [];
+    createMedication(firestore, user.uid, { ...values, reminderTimes: times, timezone: tz })
       .then(() => {
         toast({
           title: 'Medication Added',
@@ -263,6 +381,73 @@ export default function MedicationsPage() {
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="reminderEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                        <div>
+                          <FormLabel className="mb-1 block">Medication reminders</FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Get notifications at chosen times.
+                          </p>
+                        </div>
+                        <FormControl>
+                          <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch('reminderEnabled') && (
+                    <FormField
+                      control={form.control}
+                      name="reminderTimes"
+                      render={({ field }) => {
+                        const times = Array.isArray(field.value) ? field.value : [];
+                        const setTimes = (next: string[]) => field.onChange(next);
+                        return (
+                          <FormItem className="space-y-2">
+                            <FormLabel>Reminder times (up to 3)</FormLabel>
+                            <div className="space-y-2">
+                              {times.map((t, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <Input
+                                    type="time"
+                                    value={t}
+                                    onChange={(e) => {
+                                      const next = [...times];
+                                      next[idx] = e.target.value;
+                                      setTimes(next);
+                                    }}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setTimes(times.filter((_, i) => i !== idx))}
+                                  >
+                                    Remove
+                                  </Button>
+                                </div>
+                              ))}
+                              {times.length < 3 && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => setTimes([...times, '08:00'])}
+                                >
+                                  Add time
+                                </Button>
+                              )}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  )}
+
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="animate-spin" /> : <PlusCircle />}
                     Add Medication
@@ -284,7 +469,12 @@ export default function MedicationsPage() {
               {isGuardianView ? "View and track your parent's medication schedule." : 'Manage and track your medication schedule.'}
             </p>
           </div>
-          {isGuardian && <ParentSelector />}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportCsv}>
+              Export CSV
+            </Button>
+            {isGuardian && <ParentSelector />}
+          </div>
         </div>
         <div className="space-y-4">
           {medicationsLoading || logsLoading ? (
@@ -293,14 +483,28 @@ export default function MedicationsPage() {
               <Skeleton className="h-40 w-full" />
             </>
           ) : medications && medications.length > 0 ? (
-            medications.map((med) => (
-              <MedicationCard
-                key={med.id}
-                medication={med}
-                todayLog={getLogForMedication(med.id)}
-                readOnly={isGuardianView}
-              />
-            ))
+            <>
+              {medications.map((med) => (
+                <MedicationCard
+                  key={med.id}
+                  medication={med}
+                  todayLog={getLogForMedication(med.id)}
+                  readOnly={isGuardianView}
+                />
+              ))}
+              {medicationsHasMore && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => void loadMoreMedications()}
+                    disabled={medicationsLoadingMore}
+                  >
+                    {medicationsLoadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Load more
+                  </Button>
+                </div>
+              )}
+            </>
           ) : (
             <p className="py-8 text-center text-muted-foreground">
               {isGuardianView ? "No medications added yet for this parent." : 'No medications added yet. Add one to get started.'}

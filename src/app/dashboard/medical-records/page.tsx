@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useCollection, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
+import { usePaginatedCollection, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, FileText, Download } from 'lucide-react';
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -20,6 +20,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { uploadMedicalDocument } from '@/lib/medical-records-actions';
 import Link from 'next/link';
+import { withTimeout } from '@/lib/timeout';
+import { downloadBlob } from '@/lib/export-utils';
 
 type MedicalDocument = {
   fileName: string;
@@ -41,7 +43,53 @@ export default function MedicalRecordsPage() {
     () => user ? query(collection(firestore, `users/${user.uid}/medical_docs`), orderBy('createdAt', 'desc')) : null,
     [firestore, user]
   );
-  const { data: medicalDocs, isLoading } = useCollection<MedicalDocument>(medicalDocsQuery);
+  const {
+    data: medicalDocs,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+  } = usePaginatedCollection<MedicalDocument>(medicalDocsQuery, { pageSize: 20 });
+
+  const exportPdf = async () => {
+    try {
+      const { PDFDocument, StandardFonts } = await import('pdf-lib');
+      const docs = medicalDocs ?? [];
+      const pdf = await PDFDocument.create();
+      const font = await pdf.embedFont(StandardFonts.Helvetica);
+      let page = pdf.addPage();
+      let { width, height } = page.getSize();
+      let y = height - 50;
+      const line = (text: string) => {
+        if (y < 60) {
+          page = pdf.addPage();
+          ({ width, height } = page.getSize());
+          y = height - 50;
+        }
+        page.drawText(text, { x: 40, y, size: 11, font });
+        y -= 16;
+      };
+
+      line('ElderLink — Medical Records Export');
+      line(`Generated: ${new Date().toISOString()}`);
+      line('---');
+
+      if (docs.length === 0) {
+        line('No documents loaded. Load documents first, then export.');
+      } else {
+        for (const d of docs as any[]) {
+          line(`- ${d.fileName} (${d.fileType})`);
+          line(`  ${d.fileUrl}`);
+        }
+      }
+
+      const bytes = await pdf.save();
+      downloadBlob('elderlink-medical-records.pdf', new Blob([bytes], { type: 'application/pdf' }));
+      toast({ title: 'Export ready', description: 'PDF downloaded.' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Export failed', description: 'Please try again.' });
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -61,7 +109,11 @@ export default function MedicalRecordsPage() {
     setIsUploading(true);
 
     try {
-        await uploadMedicalDocument(firestore, storage, user.uid, selectedFile);
+        await withTimeout(
+          uploadMedicalDocument(firestore, storage, user.uid, selectedFile),
+          60_000,
+          'Upload timed out. Please try again.'
+        );
         toast({
             title: 'Upload Successful',
             description: `${selectedFile.name} has been securely stored.`,
@@ -89,6 +141,11 @@ export default function MedicalRecordsPage() {
         <p className="max-w-2xl text-muted-foreground">
           Securely upload, store, and manage your medical documents like reports, prescriptions, and test results.
         </p>
+        <div className="mt-3">
+          <Button variant="outline" size="sm" onClick={exportPdf}>
+            Export PDF
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -158,6 +215,14 @@ export default function MedicalRecordsPage() {
               </TableBody>
             </Table>
           </CardContent>
+          {hasMore && (
+            <div className="flex justify-center border-t p-4">
+              <Button variant="outline" onClick={() => void loadMore()} disabled={isLoadingMore}>
+                {isLoadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Load more
+              </Button>
+            </div>
+          )}
         </Card>
     </div>
   );

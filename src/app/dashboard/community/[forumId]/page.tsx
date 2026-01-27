@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import {
   useDoc,
-  useCollection,
+  usePaginatedCollection,
   useFirestore,
   useUser,
   useMemoFirebase,
@@ -103,7 +103,13 @@ export default function ForumDetailPage() {
     () => forumId ? query(collection(firestore, `communityForums/${forumId}/posts`), orderBy('createdAt', 'asc')) : null,
     [firestore, forumId]
   );
-  const { data: posts, isLoading: arePostsLoading } = useCollection<Post>(postsQuery);
+  const {
+    data: posts,
+    isLoading: arePostsLoading,
+    hasMore,
+    isLoadingMore,
+    loadMore,
+  } = usePaginatedCollection<Post>(postsQuery, { pageSize: 20 });
 
   const isMember = user && forum ? forum.memberIds.includes(user.uid) : false;
 
@@ -181,6 +187,19 @@ export default function ForumDetailPage() {
             </div>
         ) : (
             <p className="text-muted-foreground">No posts in this forum yet. Be the first to start the conversation!</p>
+        )}
+
+        {posts && posts.length > 0 && hasMore && (
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => void loadMore()}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Load more
+            </Button>
+          </div>
         )}
 
         {isMember && (

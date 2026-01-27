@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Bell, MessageSquare, Siren } from 'lucide-react';
@@ -14,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { markReminderRead } from '@/lib/reminder-actions';
+import { markNotificationRead } from '@/lib/notification-actions';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type Reminder = {
@@ -28,6 +30,15 @@ type Alert = {
   userId: string;
   timestamp?: { toDate: () => Date };
   status?: string;
+};
+
+type InboxNotification = {
+  type: string;
+  title: string;
+  body: string;
+  link?: string;
+  read?: boolean;
+  createdAt?: { toDate: () => Date };
 };
 
 export function NotificationCenter() {
@@ -60,11 +71,46 @@ export function NotificationCenter() {
   );
   const { data: alerts, isLoading: alertsLoading } = useCollection<Alert>(alertsQuery);
 
-  const unreadCount = reminders?.filter((r) => !r.read).length ?? 0;
-  const isLoading = remindersLoading || alertsLoading;
+  const inboxQuery = useMemoFirebase(
+    () =>
+      user
+        ? query(
+            collection(firestore, 'users', user.uid, 'notifications'),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+          )
+        : null,
+    [firestore, user]
+  );
+  const { data: inbox, isLoading: inboxLoading } = useCollection<InboxNotification>(inboxQuery);
+
+  const unreadCount =
+    (reminders?.filter((r) => !r.read).length ?? 0) +
+    (inbox?.filter((n) => !n.read).length ?? 0);
+  const isLoading = remindersLoading || alertsLoading || inboxLoading;
+
+  const prevUnreadRef = useRef<number | null>(null);
+  const [liveMessage, setLiveMessage] = useState('');
+  useEffect(() => {
+    if (prevUnreadRef.current === null) {
+      prevUnreadRef.current = unreadCount;
+      return;
+    }
+    if (prevUnreadRef.current !== unreadCount) {
+      setLiveMessage(
+        unreadCount > 0
+          ? `${unreadCount} new reminder${unreadCount === 1 ? '' : 's'}`
+          : 'No new reminders'
+      );
+      prevUnreadRef.current = unreadCount;
+    }
+  }, [unreadCount]);
 
   return (
     <DropdownMenu>
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {liveMessage}
+      </span>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className="relative rounded-full" aria-label="Notifications">
           <Bell className="h-4 w-4" aria-hidden />
@@ -144,7 +190,49 @@ export function NotificationCenter() {
                   ))}
                 </>
               )}
-              {(!reminders || reminders.length === 0) && (!alerts || alerts.length === 0) && (
+
+              {inbox && inbox.length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Updates</div>
+                  {inbox.map((n) => (
+                    <DropdownMenuItem
+                      key={n.id}
+                      className={!n.read ? 'bg-primary/5' : undefined}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <div className="flex w-full flex-col items-start gap-0.5">
+                        <div className="flex w-full items-center justify-between gap-2">
+                          <span className="font-medium truncate">{n.title}</span>
+                          {!n.read && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 shrink-0 px-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markNotificationRead(firestore, user!.uid, n.id);
+                              }}
+                            >
+                              Mark read
+                            </Button>
+                          )}
+                        </div>
+                        {n.link ? (
+                          <Link href={n.link} className="text-xs text-primary underline">
+                            Open
+                          </Link>
+                        ) : null}
+                        <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>
+                        <span className="text-xs text-muted-foreground">
+                          {n.createdAt?.toDate ? format(n.createdAt.toDate(), 'MMM d, h:mm a') : ''}
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </>
+              )}
+
+              {(!reminders || reminders.length === 0) && (!alerts || alerts.length === 0) && (!inbox || inbox.length === 0) && (
                 <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                   No notifications yet.
                 </div>

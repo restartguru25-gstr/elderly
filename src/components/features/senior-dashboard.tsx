@@ -94,7 +94,7 @@ export function SeniorDashboard({ userProfile }: { userProfile: WithId<UserProfi
                         <Card key={index} className="border-2 hover:border-primary/50 transition-colors">
                             <CardContent className="p-4 sm:p-5">
                                 <div className="flex items-center justify-between mb-2">
-                                    <stat.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`} />
+                                    <stat.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`} aria-hidden />
                                 </div>
                                 <div className="text-2xl sm:text-3xl font-bold">{stat.value}</div>
                                 <div className="text-xs sm:text-sm text-muted-foreground mt-1">{stat.label}</div>

@@ -91,7 +91,8 @@
     "50above50": "50Above50",
     "sos": "SOS",
     "security": "സുരക്ഷ",
-    "connectedDevices": "കണക്റ്റുചെയ്‌ത ഉപകരണങ്ങൾ"
+    "connectedDevices": "കണക്റ്റുചെയ്‌ത ഉപകരണങ്ങൾ",
+    "search": "തിരയുക"
   },
   "auth": {
     "welcomeBack": "വീണ്ടും സ്വാഗതം!",

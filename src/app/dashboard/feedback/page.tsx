@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { submitFeedback } from '@/lib/feedback-actions';
+import { enqueueOfflineAction, isProbablyOfflineError } from '@/lib/offline-queue';
 import { Loader2, MessageSquare, Star } from 'lucide-react';
 
 const schema = z.object({
@@ -41,6 +42,26 @@ export default function FeedbackPage() {
   const onSubmit = async (values: FormValues) => {
     if (!user) return;
     try {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        enqueueOfflineAction({
+          userId: user.uid,
+          type: 'submitFeedback',
+          payload: {
+            feedback: {
+              userId: user.uid,
+              email: user.email ?? undefined,
+              rating: values.rating,
+              comment: values.comment,
+              page: 'dashboard/feedback',
+            },
+          },
+        });
+        setSubmitted(true);
+        toast({ title: 'Saved offline', description: 'We will send your feedback when you are back online.' });
+        form.reset();
+        return;
+      }
+
       await submitFeedback(firestore, {
         userId: user.uid,
         email: user.email ?? undefined,
@@ -51,7 +72,26 @@ export default function FeedbackPage() {
       setSubmitted(true);
       toast({ title: 'Thank you!', description: 'Your feedback helps us improve ElderLink.' });
       form.reset();
-    } catch {
+    } catch (e) {
+      if (isProbablyOfflineError(e)) {
+        enqueueOfflineAction({
+          userId: user.uid,
+          type: 'submitFeedback',
+          payload: {
+            feedback: {
+              userId: user.uid,
+              email: user.email ?? undefined,
+              rating: values.rating,
+              comment: values.comment,
+              page: 'dashboard/feedback',
+            },
+          },
+        });
+        setSubmitted(true);
+        toast({ title: 'Saved offline', description: 'We will send your feedback when you are back online.' });
+        form.reset();
+        return;
+      }
       toast({ variant: 'destructive', title: 'Could not send', description: 'Please try again later.' });
     }
   };
