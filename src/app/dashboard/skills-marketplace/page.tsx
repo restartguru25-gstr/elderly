@@ -15,12 +15,12 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Loader2, PlusCircle, Sparkles, Briefcase, ArrowRight, Star, Palette, BookOpen, Music2 } from 'lucide-react';
 import Image from 'next/image';
 import {
-  useCollection,
+  usePaginatedCollection,
   useFirestore,
   useUser,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -181,10 +181,16 @@ export default function SkillsMarketplacePage() {
   const [activeCategory, setActiveCategory] = useState('all');
 
   const listingsQuery = useMemoFirebase(
-    () => query(collection(firestore, 'skillListings'), orderBy('createdAt', 'desc'), limit(20)),
+    () => query(collection(firestore, 'skillListings'), orderBy('createdAt', 'desc')),
     [firestore]
   );
-  const { data: listings, isLoading } = useCollection<SkillListing>(listingsQuery);
+  const {
+    data: listings,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+  } = usePaginatedCollection<SkillListing>(listingsQuery, { pageSize: 24 });
 
   return (
     <div className="space-y-8">
@@ -234,52 +240,64 @@ export default function SkillsMarketplacePage() {
           ))}
         </div>
       ) : listings && listings.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {listings.map((skill: WithId<SkillListing>) => {
-            const image =
-              PlaceHolderImages.find((p) => p.id === skill.imageId) ||
-              PlaceHolderImages.find((p) => p.id === 'skill-knitting');
-            return (
-              <Card
-                key={skill.id}
-                className="overflow-hidden flex flex-col border-2 transition-all duration-300 hover:border-primary hover:shadow-warm group"
-              >
-                {image && (
-                  <div className="relative h-40 w-full overflow-hidden">
-                    <Image
-                      src={image.imageUrl}
-                      alt={skill.title}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                      className="transition-transform duration-300 group-hover:scale-105"
-                      data-ai-hint={image.imageHint}
-                      loading="lazy"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                    <Badge className="absolute top-3 left-3 bg-background/90 text-foreground">
-                      {skill.category}
-                    </Badge>
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle className="text-lg line-clamp-2">{skill.title}</CardTitle>
-                  <CardDescription className="flex items-center gap-1">
-                    <Star className="h-4 w-4 text-primary" />
-                    by {skill.authorName}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow" />
-                <CardFooter className="pt-0">
-                  <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    Connect
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {listings.map((skill: WithId<SkillListing>) => {
+              const image =
+                PlaceHolderImages.find((p) => p.id === skill.imageId) ||
+                PlaceHolderImages.find((p) => p.id === 'skill-knitting');
+              return (
+                <Card
+                  key={skill.id}
+                  className="overflow-hidden flex flex-col border-2 transition-all duration-300 hover:border-primary hover:shadow-warm group"
+                >
+                  {image && (
+                    <div className="relative h-40 w-full overflow-hidden">
+                      <Image
+                        src={image.imageUrl}
+                        alt={skill.title}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                        data-ai-hint={image.imageHint}
+                        loading="lazy"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      <Badge className="absolute top-3 left-3 bg-background/90 text-foreground">
+                        {skill.category}
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="text-lg line-clamp-2">{skill.title}</CardTitle>
+                    <CardDescription className="flex items-center gap-1">
+                      <Star className="h-4 w-4 text-primary" />
+                      by {skill.authorName}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow" />
+                  <CardFooter className="pt-0">
+                    <Button
+                      variant="outline"
+                      className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                    >
+                      Connect
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              );
+            })}
+          </div>
+          {hasMore && (
+            <div className="flex justify-center pt-6">
+              <Button variant="outline" onClick={() => void loadMore()} disabled={isLoadingMore}>
+                {isLoadingMore ? 'Loading…' : 'Load more'}
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <Card variant="bordered" className="border-dashed">
           <CardContent className="py-16 text-center">

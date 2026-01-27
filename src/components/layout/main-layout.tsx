@@ -113,7 +113,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                       'transition-all duration-200 hover:bg-sidebar-accent/50'
                     )}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} prefetch>
                       <item.icon className={cn(
                         isActive && 'text-primary',
                         'transition-colors'

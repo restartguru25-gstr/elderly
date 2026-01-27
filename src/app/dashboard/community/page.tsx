@@ -12,26 +12,14 @@ import {
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
-import {
-  Loader2,
-  PlusCircle,
-  Users,
-  Music2,
-  Gamepad2,
-  Flower2,
-  Brain,
-  Sparkles,
-  Calendar,
-  ArrowRight,
-  Radio,
-} from 'lucide-react';
+import { Users, Music2, Gamepad2, Flower2, Brain, Sparkles, Calendar, ArrowRight, Radio } from 'lucide-react';
 import Image from 'next/image';
 import {
-  useCollection,
+  usePaginatedCollection,
   useFirestore,
   useMemoFirebase,
 } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { WithId } from '@/firebase/firestore/use-collection';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -113,10 +101,16 @@ export default function CommunityPage() {
   const [activeCategory, setActiveCategory] = useState('all');
 
   const forumsQuery = useMemoFirebase(
-    () => query(collection(firestore, 'communityForums'), orderBy('createdAt', 'desc'), limit(20)),
+    () => query(collection(firestore, 'communityForums'), orderBy('createdAt', 'desc')),
     [firestore]
   );
-  const { data: forums, isLoading } = useCollection<CommunityForum>(forumsQuery);
+  const {
+    data: forums,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+  } = usePaginatedCollection<CommunityForum>(forumsQuery, { pageSize: 20 });
 
   return (
     <div className="space-y-8">
@@ -212,11 +206,20 @@ export default function CommunityPage() {
             <Skeleton className="h-80 w-full rounded-xl" />
           </div>
         ) : forums && forums.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {forums.map((group) => (
-              <ForumCard key={group.id} group={group} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {forums.map((group) => (
+                <ForumCard key={group.id} group={group} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="flex justify-center pt-6">
+                <Button variant="outline" onClick={() => void loadMore()} disabled={isLoadingMore}>
+                  {isLoadingMore ? 'Loading…' : 'Load more'}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <Card variant="bordered" className="border-dashed">
             <CardContent className="py-16 text-center">

@@ -103,6 +103,7 @@ export function QuickActionsBar() {
                 <TooltipTrigger asChild>
                   <Link
                     href={action.href}
+                    prefetch
                     role="menuitem"
                     ref={(el) => {
                       itemRefs.current[index] = el;

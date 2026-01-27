@@ -36,6 +36,7 @@ export function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch
               className={cn(
                 'relative flex flex-col items-center justify-center gap-1 transition-colors',
                 isActive
