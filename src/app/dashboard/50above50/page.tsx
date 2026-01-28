@@ -268,7 +268,7 @@ export default function FiftyAboveFiftyPage() {
                   <Trophy className="h-8 w-8 text-white" />
                 </div>
                 <Badge className="bg-primary text-white text-base px-4 py-2">
-                  ₹ 1 Cr. Prize Pool
+                  ₹ 1,00,000 Prize Pool
                 </Badge>
                 {isAdmin && (
                   <Badge variant="secondary" className="ml-2">
@@ -279,7 +279,7 @@ export default function FiftyAboveFiftyPage() {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4">
                 Showcase your talent & win
                 <br />
-                <span className="text-gradient-primary">₹ 1 Cr. Prize Pool</span>
+                <span className="text-gradient-primary">₹ 1,00,000 Prize Pool</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-6 max-w-2xl">
                 India&apos;s biggest talent hunt for seniors above 50. Nominate yourself in 50 unique categories.
@@ -427,9 +427,9 @@ export default function FiftyAboveFiftyPage() {
                   <div className="text-lg font-semibold mb-2">Grand Award Show</div>
                   <div className="flex items-center justify-center gap-2 text-sm">
                     <MapPin className="h-4 w-4" />
-                    <span>NESCO, Mumbai</span>
+                    <span>Hyderabad • Venue to be announced</span>
                   </div>
-                  <div className="mt-4 text-sm">15 November 2025</div>
+                  <div className="mt-4 text-sm">14 &amp; 15 March 2026</div>
                 </div>
               </div>
             </div>
@@ -664,7 +664,7 @@ export default function FiftyAboveFiftyPage() {
               {
                 step: '3',
                 title: 'Grand Award Show',
-                description: 'Winners announced at the 2-day mega event in Mumbai',
+                description: 'Winners announced at the 2-day mega event in Hyderabad',
               },
             ].map((item) => (
               <div key={item.step} className="text-center p-6 rounded-xl border-2 bg-secondary/20">
@@ -691,7 +691,7 @@ export default function FiftyAboveFiftyPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               'Showcase your unique talents',
-              'Win from ₹ 1 Cr. prize pool',
+              'Win from ₹ 1,00,000 prize pool',
               'Get recognized nationwide',
               'Connect with like-minded seniors',
               'FREE entry for ElderLink members',
