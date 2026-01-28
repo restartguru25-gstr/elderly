@@ -193,3 +193,24 @@ export const medicationReminderScheduler = onSchedule('every 5 minutes', async (
   }
 });
 
+/**
+ * 50Above50 voting: increment voteCount when a new vote is created.
+ * Note: Functions bypass Firestore rules via Admin SDK.
+ */
+export const onFiftyAboveFiftyVoteCreated = onDocumentCreated(
+  'contests/50above50/submissions/{submissionId}/votes/{voterId}',
+  async (event) => {
+    const submissionId = event.params.submissionId as string;
+    const db = getFirestore();
+    const ref = db.doc(`contests/50above50/submissions/${submissionId}`);
+    await ref.set(
+      {
+        voteCount: FieldValue.increment(1),
+        lastVotedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+);
+

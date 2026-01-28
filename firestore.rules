@@ -100,6 +100,18 @@ service cloud.firestore {
     }
 
     /**
+     * Checks if the current user is an app admin.
+     * Admins are allowed to moderate contest submissions and other protected resources.
+     */
+    function isAdmin() {
+      return isSignedIn()
+        && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('userType', '') == 'admin'
+        );
+    }
+
+    /**
      * Checks if the requesting guardian is linked to the senior (userId) and has permission.
      * @param userId The senior's user ID
      * @param permissionType 'vitals' or 'location' - the permission to check
@@ -330,9 +342,61 @@ service cloud.firestore {
        * @principle Access is restricted to members of the parent forum.
        */
       match /posts/{postId} {
-        allow list, get: if isForumMember(communityForumId);
+        // Reading posts should be allowed for any signed-in user (guardians/children/seniors),
+        // even before they explicitly "join" a forum.
+        allow list, get: if isSignedIn();
         allow create: if isForumMember(communityForumId) && request.resource.data.authorId == request.auth.uid;
         allow update, delete: if isForumMember(communityForumId) && resource.data.authorId == request.auth.uid;
+      }
+    }
+
+    /**
+     * 50Above50 contest submissions and votes.
+     * Paths:
+     * - /contests/50above50/submissions/{submissionId}
+     * - /contests/50above50/submissions/{submissionId}/votes/{voterId}
+     */
+    match /contests/{contestId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+
+      match /submissions/{submissionId} {
+        // Approved entries are public to signed-in users. Owners can read their own (even pending).
+        allow get, list: if isSignedIn()
+          && (
+            resource.data.status == 'approved'
+            || resource.data.userId == request.auth.uid
+            || isAdmin()
+          );
+
+        // Anyone signed in can create a submission for themselves; default status must be pending.
+        allow create: if isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.voteCount == 0;
+
+        // Owners can update their own submission while pending, but cannot change status/voteCount/userId.
+        allow update: if isSignedIn() && (
+          (
+            resource.data.userId == request.auth.uid
+            && resource.data.status == 'pending'
+            && request.resource.data.userId == resource.data.userId
+            && request.resource.data.status == resource.data.status
+            && request.resource.data.voteCount == resource.data.voteCount
+          )
+          ||
+          // Admin moderation
+          (isAdmin())
+        );
+
+        allow delete: if isAdmin();
+
+        match /votes/{voterId} {
+          allow create: if isSignedIn() && request.auth.uid == voterId;
+          allow get: if isSignedIn() && (request.auth.uid == voterId || isAdmin());
+          allow list: if false;
+          allow delete: if isAdmin();
+        }
       }
     }
 
