@@ -54,7 +54,8 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
-        <link rel="manifest" href="/manifest.json" />
+        {/* Some hosting providers/protected deployments require credentials for manifest fetch */}
+        <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
         {/* Modern PWA meta for non-Apple browsers */}
         <meta name="mobile-web-app-capable" content="yes" />
         {/* iOS PWA meta */}
