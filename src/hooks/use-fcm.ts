@@ -9,6 +9,40 @@ import { updateUserProfile } from '@/lib/user-actions';
 const FCM_SW_PATH = '/firebase-messaging-sw.js';
 const VAPID_KEY = process.env.NEXT_PUBLIC_FCM_VAPID_KEY ?? '';
 
+async function getFcmServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
+  if (typeof window === 'undefined') return null;
+  if (!('serviceWorker' in navigator)) return null;
+  try {
+    const existing = await navigator.serviceWorker.getRegistration();
+    const scriptURL =
+      existing?.active?.scriptURL ||
+      existing?.waiting?.scriptURL ||
+      existing?.installing?.scriptURL ||
+      '';
+
+    // If a different SW is already controlling the origin, don't overwrite it.
+    // (If you later add a real PWA service worker, the FCM handlers should be merged into that SW.)
+    if (existing && scriptURL && !scriptURL.endsWith(FCM_SW_PATH)) {
+      console.warn(
+        '[FCM] Another service worker is already registered; skipping FCM SW registration to avoid conflicts.',
+        scriptURL
+      );
+      return null;
+    }
+
+    // Register (or re-register) the Firebase messaging SW.
+    // updateViaCache helps avoid stale SW script caching in some browsers.
+    return await navigator.serviceWorker.register(FCM_SW_PATH, {
+      // TS lib dom type may not include this in all setups.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      updateViaCache: 'none' as any,
+    });
+  } catch (e) {
+    console.warn('[FCM] Failed to register messaging service worker:', e);
+    return null;
+  }
+}
+
 export function useFCM() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -26,7 +60,8 @@ export function useFCM() {
       const perm = await Notification.requestPermission();
       setPermission(perm);
       if (perm !== 'granted') return null;
-      const reg = await navigator.serviceWorker.register(FCM_SW_PATH);
+      const reg = await getFcmServiceWorkerRegistration();
+      if (!reg) return null;
       const t = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
       setToken(t);
       if (t) await updateUserProfile(firestore, user.uid, { fcmToken: t });
@@ -47,10 +82,14 @@ export function useFCM() {
       if (!ok) return;
       if (!VAPID_KEY) return;
       const messaging = getMessaging(getApp());
-      setPermission(Notification.permission);
-      navigator.serviceWorker
-        .register(FCM_SW_PATH)
-        .then((reg) => getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg }))
+      const perm = Notification.permission;
+      setPermission(perm);
+      if (perm !== 'granted') return;
+      getFcmServiceWorkerRegistration()
+        .then((reg) => {
+          if (!reg) return null;
+          return getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+        })
         .then((t) => {
           if (!mounted || !t) return;
           setToken(t);

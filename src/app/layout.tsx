@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import Script from 'next/script';
 import { ClientOnlyToaster } from '@/components/ui/client-only-toaster';
 import { cn } from '@/lib/utils';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -10,6 +11,7 @@ import { WebVitalsReport } from '@/components/web-vitals-report';
 import { OfflineBanner } from '@/components/features/offline-banner';
 import { PWAInstallBanner } from '@/components/features/pwa-install-banner';
 import { OfflineQueueProcessor } from '@/components/features/offline-queue-processor';
+import { ChunkRecovery } from '@/components/features/chunk-recovery';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { ReactQueryProvider } from '@/components/providers/react-query-provider';
@@ -53,6 +55,9 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
+        {/* Modern PWA meta for non-Apple browsers */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        {/* iOS PWA meta */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -63,7 +68,60 @@ export default async function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased min-h-screen bg-background prevent-pull-refresh')}>
+        <Script id="elderlink-chunk-recovery" strategy="beforeInteractive">
+          {`
+(function () {
+  try {
+    var KEY = '__elderlink_chunk_recover_attempted__';
+    function reloadOnce() {
+      try {
+        var attempted = sessionStorage.getItem(KEY) === '1';
+        if (attempted) return;
+        sessionStorage.setItem(KEY, '1');
+      } catch (e) {}
+      window.location.reload();
+    }
+    function looksLikeChunkCrash(msg) {
+      if (!msg) return false;
+      return (
+        msg.indexOf('ChunkLoadError') !== -1 ||
+        msg.indexOf('Loading chunk') !== -1 ||
+        msg.indexOf("reading 'call'") !== -1 ||
+        msg.indexOf('Cannot read properties of undefined (reading') !== -1 ||
+        msg.indexOf('Unexpected token') !== -1 ||
+        msg.indexOf('Invalid or unexpected token') !== -1
+      );
+    }
+    window.addEventListener(
+      'error',
+      function (ev) {
+        try {
+          // Resource load errors (script/link) can come as Event with a target.
+          var t = ev && (ev.target || ev.srcElement);
+          var src = (t && (t.src || t.href)) ? String(t.src || t.href) : '';
+          if (src && src.indexOf('/_next/') !== -1) {
+            reloadOnce();
+            return;
+          }
+          var m = ev && ev.message;
+          if (looksLikeChunkCrash(m)) reloadOnce();
+        } catch (e) {}
+      },
+      true
+    );
+    window.addEventListener('unhandledrejection', function (ev) {
+      try {
+        var r = ev && ev.reason;
+        var m = (r && r.message) ? String(r.message) : String(r || '');
+        if (looksLikeChunkCrash(m)) reloadOnce();
+      } catch (e) {}
+    });
+  } catch (e) {}
+})();
+          `}
+        </Script>
         <NextIntlClientProvider locale={locale} messages={messages}>
+          <ChunkRecovery />
           <SkipToContent />
           <OfflineBanner />
           <PWAInstallBanner />
