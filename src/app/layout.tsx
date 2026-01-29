@@ -52,7 +52,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale ?? 'en'} suppressHydrationWarning>
       <head>
         {/* Some hosting providers/protected deployments require credentials for manifest fetch */}
         <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
@@ -68,7 +68,7 @@ export default async function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={cn('font-body antialiased min-h-screen bg-background prevent-pull-refresh')}>
+      <body className={cn('font-body antialiased min-h-screen bg-background prevent-pull-refresh')} suppressHydrationWarning>
         <Script id="elderlink-chunk-recovery" strategy="beforeInteractive">
           {`
 (function () {
@@ -121,7 +121,7 @@ export default async function RootLayout({
 })();
           `}
         </Script>
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider locale={locale ?? 'en'} messages={messages ?? {}}>
           <ChunkRecovery />
           <SkipToContent />
           <OfflineBanner />

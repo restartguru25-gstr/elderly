@@ -10,6 +10,7 @@ function shouldForceReloadFromError(err: unknown): boolean {
   return (
     msg.includes('ChunkLoadError') ||
     msg.includes('Loading chunk') ||
+    msg.includes("reading 'call'") ||
     msg.includes('Cannot read properties of undefined (reading') ||
     msg.includes('Unexpected token') ||
     msg.includes('Invalid or unexpected token')

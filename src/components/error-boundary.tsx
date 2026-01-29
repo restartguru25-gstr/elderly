@@ -39,6 +39,17 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   handleRetry = () => {
+    // Chunk load errors need a full reload to fetch fresh assets
+    const msg = this.state.error?.message ?? '';
+    const isChunkError =
+      msg.includes("reading 'call'") ||
+      msg.includes('ChunkLoadError') ||
+      msg.includes('Loading chunk') ||
+      msg.includes('Cannot read properties of undefined (reading');
+    if (isChunkError && typeof window !== 'undefined') {
+      window.location.reload();
+      return;
+    }
     this.setState({ hasError: false, error: null });
   };
 
@@ -47,6 +58,16 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       if (this.props.fallback) {
         return this.props.fallback;
       }
+      const msg = this.state.error?.message ?? '';
+      const isChunkError =
+        msg.includes("reading 'call'") ||
+        msg.includes('ChunkLoadError') ||
+        msg.includes('Loading chunk') ||
+        msg.includes('Cannot read properties of undefined (reading');
+      const description = isChunkError
+        ? 'A script failed to load (often due to a stale cache). Click "Try again" to refresh the page.'
+        : 'An unexpected error occurred. Please try again.';
+
       return (
         <div className="flex min-h-[50vh] items-center justify-center p-4">
           <Card className="max-w-md border-2 shadow-soft-lg">
@@ -57,9 +78,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 </div>
                 <div>
                   <CardTitle className="text-xl">Something went wrong</CardTitle>
-                  <CardDescription>
-                    An unexpected error occurred. Please try again.
-                  </CardDescription>
+                  <CardDescription>{description}</CardDescription>
                 </div>
               </div>
             </CardHeader>
