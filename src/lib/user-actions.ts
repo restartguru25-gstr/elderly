@@ -21,6 +21,7 @@ export type UserProfileAddon = {
   firstName: string;
   lastName: string;
   userType: 'senior' | 'guardian' | 'provider' | 'admin';
+  isAdmin?: boolean;
   phone?: string | null;
   age?: number;
   emergencyContacts?: EmergencyContact[];

@@ -8,6 +8,7 @@ import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { isSuperAdmin } from '@/lib/constants';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
@@ -18,8 +19,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     [firestore, user]
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ isAdmin?: boolean; userType?: string }>(userRef);
-  const isAdmin = !!(userProfile?.isAdmin || userProfile?.userType === 'admin');
-  const loading = isUserLoading || isProfileLoading;
+  const isAdmin = isSuperAdmin(user?.uid) || !!(userProfile?.isAdmin || userProfile?.userType === 'admin');
+  const loading = isUserLoading || (!isSuperAdmin(user?.uid) && isProfileLoading);
 
   if (loading) {
     return (

@@ -47,6 +47,7 @@ import {
   FIFTY_ABOVE_FIFTY_CONTEST_ID,
   type FiftyAboveFiftySubmissionStatus,
 } from '@/lib/fiftyabove50-actions';
+import { isSuperAdmin } from '@/lib/constants';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const categories = [
@@ -154,7 +155,7 @@ export default function FiftyAboveFiftyPage() {
     [firestore, user]
   );
   const { data: userProfile } = useDoc<any>(userRef);
-  const isAdmin = !!(userProfile?.isAdmin || userProfile?.userType === 'admin');
+  const isAdmin = isSuperAdmin(user?.uid) || !!(userProfile?.isAdmin || userProfile?.userType === 'admin');
 
   const form = useForm<SubmissionFormValues>({
     resolver: zodResolver(submissionSchema),

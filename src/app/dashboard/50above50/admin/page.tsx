@@ -15,6 +15,7 @@ import {
   updateFiftyAboveFiftySubmissionStatus,
   type FiftyAboveFiftySubmissionStatus,
 } from '@/lib/fiftyabove50-actions';
+import { isSuperAdmin } from '@/lib/constants';
 
 type Submission = {
   userId: string;
@@ -41,7 +42,7 @@ export default function FiftyAboveFiftyAdminPage() {
     [firestore, user]
   );
   const { data: userProfile } = useDoc<any>(userRef);
-  const isAdmin = !!(userProfile?.isAdmin || userProfile?.userType === 'admin');
+  const isAdmin = isSuperAdmin(user?.uid) || !!(userProfile?.isAdmin || userProfile?.userType === 'admin');
 
   const pendingQuery = useMemoFirebase(() => {
     const col = collection(firestore, 'contests', FIFTY_ABOVE_FIFTY_CONTEST_ID, 'submissions');

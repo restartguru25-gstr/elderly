@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -34,12 +35,14 @@ import { NotificationCenter } from '../features/notification-center';
 import { FCMBanner } from '../features/fcm-banner';
 import { FCMForegroundToaster } from '../features/fcm-foreground-toaster';
 import Link from 'next/link';
-import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { doc, serverTimestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
+import { isSuperAdmin } from '@/lib/constants';
+import { updateUserProfile } from '@/lib/user-actions';
 
 const navItems = [
   { href: '/dashboard', icon: Home, key: 'dashboard' },
@@ -80,8 +83,28 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     () => (user ? doc(firestore, 'users', user.uid) : null),
     [firestore, user]
   );
-  const { data: userProfile } = useDoc<{ isAdmin?: boolean; userType?: string }>(userRef);
-  const isAdmin = !!(userProfile?.isAdmin || userProfile?.userType === 'admin');
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ isAdmin?: boolean; userType?: string }>(userRef);
+  const isAdmin = isSuperAdmin(user?.uid) || !!(userProfile?.isAdmin || userProfile?.userType === 'admin');
+  const superAdminSyncDone = useRef(false);
+
+  useEffect(() => {
+    if (!user?.uid || !firestore || !isSuperAdmin(user.uid)) return;
+    if (superAdminSyncDone.current) return;
+    if (isProfileLoading) return;
+    const p = userProfile as { isAdmin?: boolean; userType?: string } | null | undefined;
+    if (p != null) {
+      if (p.isAdmin === true && p.userType === 'admin') {
+        superAdminSyncDone.current = true;
+        return;
+      }
+      superAdminSyncDone.current = true;
+      updateUserProfile(firestore, user.uid, { isAdmin: true, userType: 'admin' }).catch(() => {});
+      return;
+    }
+    superAdminSyncDone.current = true;
+    const userDocRef = doc(firestore, 'users', user.uid);
+    setDocumentNonBlocking(userDocRef, { id: user.uid, isAdmin: true, userType: 'admin', updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+  }, [user, firestore, userProfile, isProfileLoading]);
 
   const handleLogout = async () => {
     try {
