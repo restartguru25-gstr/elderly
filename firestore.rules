@@ -148,8 +148,9 @@ service cloud.firestore {
             && request.resource.data.id == resource.data.id
             && request.resource.data.linkedProfiles.hasAll(resource.data.get('linkedProfiles', []))
             && request.resource.data.linkedProfiles.hasAny([request.auth.uid])
-            && request.resource.data.linkedProfiles.size() <= resource.data.get('linkedProfiles', []).size() + 1);
-      allow delete: if isExistingOwner(userId);
+            && request.resource.data.linkedProfiles.size() <= resource.data.get('linkedProfiles', []).size() + 1)
+        || isAdmin();
+      allow delete: if isExistingOwner(userId) || isAdmin();
 
       /**
        * @description Manages a user's private mood check-in entries.
@@ -409,7 +410,8 @@ service cloud.firestore {
     match /skillListings/{skillId} {
       allow get, list: if isSignedIn();
       allow create: if isOwner(request.resource.data.authorId);
-      allow update, delete: if isExistingOwner(resource.data.authorId);
+      allow update: if isExistingOwner(resource.data.authorId);
+      allow delete: if isExistingOwner(resource.data.authorId) || isAdmin();
     }
     
     /**

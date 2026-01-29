@@ -92,7 +92,8 @@
     "50above50": "50Above50",
     "sos": "SOS",
     "security": "భద్రత",
-    "connectedDevices": "కనెక్ట్ చేసిన డివైస్లు"
+    "connectedDevices": "కనెక్ట్ చేసిన డివైస్లు",
+    "admin": "అడ్మిన్"
   },
   "auth": {
     "welcomeBack": "తిరిగి స్వాగతం!",

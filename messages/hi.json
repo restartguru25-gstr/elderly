@@ -92,7 +92,8 @@
     "50above50": "50Above50",
     "sos": "SOS",
     "security": "सुरक्षा",
-    "connectedDevices": "जुड़े डिवाइस"
+    "connectedDevices": "जुड़े डिवाइस",
+    "admin": "व्यवस्थापक"
   },
   "auth": {
     "welcomeBack": "वापस स्वागत है!",

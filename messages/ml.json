@@ -92,7 +92,8 @@
     "sos": "SOS",
     "security": "സുരക്ഷ",
     "connectedDevices": "കണക്റ്റുചെയ്‌ത ഉപകരണങ്ങൾ",
-    "search": "തിരയുക"
+    "search": "തിരയുക",
+    "admin": "അഡ്മിൻ"
   },
   "auth": {
     "welcomeBack": "വീണ്ടും സ്വാഗതം!",

@@ -92,7 +92,8 @@
     "sos": "SOS",
     "security": "ಭದ್ರತೆ",
     "connectedDevices": "ಸಂಪರ್ಕಿಸಿದ ಸಾಧನಗಳು",
-    "search": "ಹುಡುಕಿ"
+    "search": "ಹುಡುಕಿ",
+    "admin": "ನಿರ್ವಾಹಕ"
   },
   "auth": {
     "welcomeBack": "ಮತ್ತೆ ಸ್ವಾಗತ!",

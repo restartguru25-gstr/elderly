@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, MessageSquare, Smartphone, Search as SearchIcon } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Search as SearchIcon } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Logo } from '@/components/logo';
@@ -34,7 +34,8 @@ import { NotificationCenter } from '../features/notification-center';
 import { FCMBanner } from '../features/fcm-banner';
 import { FCMForegroundToaster } from '../features/fcm-foreground-toaster';
 import Link from 'next/link';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
@@ -61,17 +62,26 @@ const navItems = [
   { href: '/dashboard/security', icon: Shield, key: 'security' },
   { href: '/dashboard/connected-devices', icon: Smartphone, key: 'connectedDevices' },
   { href: '/dashboard/emergency', icon: Siren, key: 'sos' },
+  { href: '/dashboard/admin', icon: ShieldCheck, key: 'admin' },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const t = useTranslations('dashboard');
   const tNav = useTranslations('nav');
   const tCommon = useTranslations('common');
+
+  const userRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: userProfile } = useDoc<{ isAdmin?: boolean; userType?: string }>(userRef);
+  const isAdmin = !!(userProfile?.isAdmin || userProfile?.userType === 'admin');
 
   const handleLogout = async () => {
     try {
@@ -97,6 +107,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <SidebarContent>
           <SidebarMenu>
             {navItems.map((item) => {
+              if (item.key === 'admin' && !isAdmin) return null;
               const label = tNav(item.key);
               const isActive = pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard');
               return (

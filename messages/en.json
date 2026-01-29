@@ -92,7 +92,8 @@
     "50above50": "50Above50",
     "sos": "SOS",
     "security": "Security",
-    "connectedDevices": "Connected devices"
+    "connectedDevices": "Connected devices",
+    "admin": "Admin"
   },
   "auth": {
     "welcomeBack": "Welcome Back!",

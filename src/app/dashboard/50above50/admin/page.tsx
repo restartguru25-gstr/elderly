@@ -91,9 +91,12 @@ export default function FiftyAboveFiftyAdminPage() {
           <h1 className="text-3xl font-bold">50Above50 — Admin Review</h1>
           <p className="text-muted-foreground">Approve or reject nominations.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => void refresh()}>
             Refresh
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/admin">Admin hub</Link>
           </Button>
           <Button asChild>
             <Link href="/dashboard/50above50">View live page</Link>
