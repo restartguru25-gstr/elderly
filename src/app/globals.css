@@ -171,6 +171,10 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
   }
+  @keyframes gradient-drift {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.75; }
+  }
 }
 
 @layer utilities {
@@ -191,6 +195,27 @@
   }
   .animate-float {
     animation: float 3s ease-in-out infinite;
+  }
+  /* Scroll-triggered: start hidden, animate in when in view */
+  .animate-on-scroll {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  .animate-on-scroll-in-view {
+    animation: fade-in-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  /* Landing hover */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+  .hover-lift-shadow:hover {
+    box-shadow: 0 12px 40px -12px rgba(255, 122, 0, 0.2), 0 4px 16px -4px rgba(0, 0, 0, 0.08);
+  }
+  .animate-gradient-drift {
+    animation: gradient-drift 8s ease-in-out infinite;
   }
 }
 
