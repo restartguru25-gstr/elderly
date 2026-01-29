@@ -163,6 +163,14 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{user?.displayName || user?.email || 'My Account'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {isAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/admin" className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4" />
+                    {tNav('admin')}
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/profile">{tCommon('settings')}</Link>
               </DropdownMenuItem>
