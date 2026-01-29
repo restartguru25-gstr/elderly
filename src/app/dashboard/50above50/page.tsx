@@ -36,7 +36,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Trophy, Calendar, MapPin, ArrowRight, Star, Award, Sparkles, Heart, ShieldCheck } from 'lucide-react';
+import { Trophy, Calendar, MapPin, ArrowRight, Star, Award, Sparkles, Heart, ShieldCheck, AlertCircle, RefreshCw } from 'lucide-react';
 
 import { useDoc, useFirestore, useMemoFirebase, usePaginatedCollection, useStorage, useUser } from '@/firebase';
 import { collection, doc, orderBy, query, where } from 'firebase/firestore';
@@ -177,6 +177,7 @@ export default function FiftyAboveFiftyPage() {
     hasMore: approvedHasMore,
     loadMore: loadMoreApproved,
     refresh: refreshApproved,
+    error: approvedError,
   } = usePaginatedCollection<Submission>(approvedQuery, { pageSize: 12 });
 
   const myQuery = useMemoFirebase(() => {
@@ -192,6 +193,7 @@ export default function FiftyAboveFiftyPage() {
     data: mine,
     isLoading: mineLoading,
     refresh: refreshMine,
+    error: mineError,
   } = usePaginatedCollection<Submission>(myQuery, { pageSize: 10 });
 
   const openNomination = (categoryId?: string) => {
@@ -469,7 +471,23 @@ export default function FiftyAboveFiftyPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {approvedLoading ? (
+          {approvedError ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+              <div className="rounded-full bg-destructive/10 p-4">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Access denied or data unavailable</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  We couldn&apos;t load the gallery. Check your permissions or try again.
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => void refreshApproved()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try again
+              </Button>
+            </div>
+          ) : approvedLoading ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <Skeleton className="h-72 w-full rounded-xl" />
               <Skeleton className="h-72 w-full rounded-xl" />
@@ -572,7 +590,21 @@ export default function FiftyAboveFiftyPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            {mineLoading ? (
+            {mineError ? (
+              <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
+                <div className="rounded-full bg-destructive/10 p-3">
+                  <AlertCircle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Couldn&apos;t load your nominations</p>
+                  <p className="text-sm text-muted-foreground mt-1">Check permissions or try again.</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => void refreshMine()}>
+                  <RefreshCw className="mr-2 h-3 w-3" />
+                  Try again
+                </Button>
+              </div>
+            ) : mineLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-16 w-full rounded-xl" />
                 <Skeleton className="h-16 w-full rounded-xl" />

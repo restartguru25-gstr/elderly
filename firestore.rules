@@ -102,14 +102,20 @@ service cloud.firestore {
     /**
      * Checks if the current user is an app admin.
      * Admins are allowed to moderate contest submissions and other protected resources.
+     * Admin can be: (a) email admin@smr.com, or (b) user doc with isAdmin/userType in Firestore.
      * Uses exists() so that a missing user document does not cause rule evaluation to fail.
      */
     function isAdmin() {
       return isSignedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true
-          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('userType', '') == 'admin'
+          request.auth.token.email == 'admin@smr.com'
+          || (
+            exists(/databases/$(database)/documents/users/$(request.auth.uid))
+            && (
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true
+              || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('userType', '') == 'admin'
+            )
+          )
         );
     }
 
