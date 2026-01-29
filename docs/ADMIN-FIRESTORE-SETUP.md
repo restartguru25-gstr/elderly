@@ -2,18 +2,21 @@
 
 ## Why the error happens
 
-The app uses **Firestore Security Rules** to decide who can read/write. Listing contest submissions at `contests/50above50/submissions` is allowed only if:
+**Collection queries use `list`**, not `read` alone. In Firestore, `read` = `get` + `list`.  
+The rules **explicitly `allow list`** on `contests/{contestId}/submissions`. Without that, **"Missing or insufficient permissions"** on list never goes away.
 
-1. You are signed in ✅ (you are: admin@smr.com)
-2. **And** for each document, one of:
-   - `status == 'approved'`, or
-   - `userId == your uid`, or
-   - **you are an admin** (`isAdmin()` is true)
+Listing submissions is allowed only when you're signed in **and** for each document one of:
 
-**Admin is determined by your user document in Firestore**, not by Firebase Auth email. So the "real problem" is either:
+- `status == 'approved'`, or  
+- `userId == your uid`, or  
+- **you are an admin** (`isAdmin()`)
 
-- Your **Firestore rules** in the Firebase project are not the latest (not deployed), or  
-- Your **user profile in Firestore** does not exist or does not have admin flags set.
+**Admin** = `admin@smr.com` (email) **or** user doc with `isAdmin: true` / `userType: 'admin'`.
+
+The "real problem" is usually:
+
+- **Rules not deployed** (Firebase still has old rules), or  
+- **User not admin** (no user doc or missing admin flags).
 
 ---
 
@@ -21,19 +24,16 @@ The app uses **Firestore Security Rules** to decide who can read/write. Listing 
 
 ### Step 1: Deploy the latest Firestore rules
 
-The rules in this repo (with `exists()` check for `isAdmin()`) must be deployed to your Firebase project:
+The rules in this repo (explicit `allow list` for submissions, `isAdmin()` with email + user doc) must be deployed:
 
 ```bash
 cd /home/surya/Downloads/elderly-main
 firebase deploy --only firestore:rules
 ```
 
-If you use a different project alias:
+If you use a different project alias: `firebase use your-project-id`, then run deploy.
 
-```bash
-firebase use your-project-id
-firebase deploy --only firestore:rules
-```
+**Then:** wait ~1 minute, then hard-refresh the app (Ctrl+Shift+R / Cmd+Shift+R).
 
 ### Step 2: Create or update your user document as admin
 
@@ -65,7 +65,21 @@ If the document doesn’t exist yet:
 2. In Firestore, open **users** → document **6njOuKAigqXj1EJe2qGfwvBkm692**.
 3. Add `isAdmin: true` or `userType: "admin"` as above.
 
-After Step 1 and Step 2, the "Missing or insufficient permissions" error for listing `contests/50above50/submissions` should stop (after a refresh or re-login if needed).
+After Step 1 and Step 2, the "Missing or insufficient permissions" error for listing `contests/50above50/submissions` should stop (refresh or re-login if needed).
+
+### Optional: Verify token email
+
+In the browser console (while signed in):
+
+```js
+// If using Firebase v9+ modular SDK, get auth from your app and run:
+// (adjust import path as in your app)
+import { getAuth } from 'firebase/auth';
+const auth = getAuth();
+auth.currentUser?.getIdTokenResult().then(t => console.log(t.claims?.email));
+```
+
+Should log `admin@smr.com` for the admin user. If not, rules that rely on `request.auth.token.email` won’t match.
 
 ---
 
