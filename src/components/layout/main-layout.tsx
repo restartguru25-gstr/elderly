@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Search as SearchIcon } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Search as SearchIcon, Wrench } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Logo } from '@/components/logo';
@@ -57,6 +57,7 @@ const navItems = [
   { href: '/dashboard/community', icon: Users, key: 'community' },
   { href: '/dashboard/messages', icon: MessageSquare, key: 'messages' },
   { href: '/dashboard/skills-marketplace', icon: Briefcase, key: 'skillsMarketplace' },
+  { href: '/dashboard/services', icon: Wrench, key: 'services' },
   { href: '/dashboard/tours', icon: Plane, key: 'tours' },
   { href: '/dashboard/shop', icon: ShoppingBag, key: 'shop' },
   { href: '/dashboard/rewards', icon: Coins, key: 'rewards' },

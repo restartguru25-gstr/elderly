@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { doctors } from '@/lib/data';
+import { doctors as fallbackDoctors } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Loader2, Search } from 'lucide-react';
-import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection } from '@/firebase';
+import { collection, doc, query, orderBy, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { createAppointment } from '@/lib/telemedicine-actions';
+import type { Doctor } from '@/lib/doctors-actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,15 +27,14 @@ import {
 import { ParentSelector } from '@/components/features/parent-selector';
 import { useLinkedSenior } from '@/hooks/use-linked-senior';
 import { useTranslations } from 'next-intl';
-
-type Doctor = (typeof doctors)[0];
+import { Skeleton } from '@/components/ui/skeleton';
 
 function BookAppointmentButton({
   doctor,
   patientId,
   patientName,
 }: {
-  doctor: Doctor;
+  doctor: { id: string; name: string; specialty: string; imageId?: string | null };
   patientId?: string | null;
   patientName?: string;
 }) {
@@ -108,6 +108,16 @@ export default function TelemedicinePage() {
   const { data: userProfile } = useDoc(userDocRef);
   const { linkedSeniors, selectedSeniorId, selectedSenior } = useLinkedSenior();
 
+  const doctorsQuery = useMemoFirebase(
+    () => query(collection(firestore, 'doctors'), orderBy('createdAt', 'desc'), limit(50)),
+    [firestore]
+  );
+  const { data: doctorsFromDb, isLoading: doctorsLoading } = useCollection<Doctor>(doctorsQuery);
+
+  const doctors = (doctorsFromDb && doctorsFromDb.length > 0)
+    ? doctorsFromDb
+    : fallbackDoctors.map((d) => ({ id: d.id, name: d.name, specialty: d.specialty, imageId: d.imageId }));
+
   const isGuardian = userProfile?.userType === 'guardian';
   const hasLinkedParent = isGuardian && linkedSeniors.length > 0 && selectedSeniorId;
   const parentName = selectedSenior
@@ -131,30 +141,38 @@ export default function TelemedicinePage() {
         <Input placeholder="Search by doctor name or specialty..." className="max-w-lg pl-10" />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {doctors.map((doctor) => {
-          const image = PlaceHolderImages.find((p) => p.id === doctor.imageId);
-          return (
-            <Card key={doctor.id} className="flex flex-col">
-              <CardHeader className="items-center text-center">
-                <Avatar className="mb-4 h-24 w-24">
-                  {image && <AvatarImage src={image.imageUrl} alt={doctor.name} data-ai-hint={image.imageHint} />}
-                  <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <CardTitle>{doctor.name}</CardTitle>
-                <CardDescription>{doctor.specialty}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-grow items-end justify-center">
-                <BookAppointmentButton
-                  doctor={doctor}
-                  patientId={hasLinkedParent ? selectedSeniorId : null}
-                  patientName={hasLinkedParent ? parentName : undefined}
-                />
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {doctorsLoading && doctorsFromDb === null ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-56 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {doctors.map((doctor) => {
+            const image = PlaceHolderImages.find((p) => p.id === (doctor.imageId || 'doctor-avatar-1'));
+            return (
+              <Card key={doctor.id} className="flex flex-col">
+                <CardHeader className="items-center text-center">
+                  <Avatar className="mb-4 h-24 w-24">
+                    {image && <AvatarImage src={image.imageUrl} alt={doctor.name} data-ai-hint={image.imageHint} />}
+                    <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <CardTitle>{doctor.name}</CardTitle>
+                  <CardDescription>{doctor.specialty}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-grow items-end justify-center">
+                  <BookAppointmentButton
+                    doctor={doctor}
+                    patientId={hasLinkedParent ? selectedSeniorId : null}
+                    patientName={hasLinkedParent ? parentName : undefined}
+                  />
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

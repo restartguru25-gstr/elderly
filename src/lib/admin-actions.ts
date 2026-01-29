@@ -34,3 +34,12 @@ export function deleteSkillListing(firestore: Firestore, skillId: string) {
   const skillRef = doc(firestore, 'skillListings', skillId);
   return deleteDocumentNonBlocking(skillRef);
 }
+
+/**
+ * Admin-only: delete a community forum. Firestore rules must allow delete for isAdmin().
+ */
+export function deleteCommunityForum(firestore: Firestore, forumId: string) {
+  if (!forumId) throw new Error('Forum ID is required.');
+  const forumRef = doc(firestore, 'communityForums', forumId);
+  return deleteDocumentNonBlocking(forumRef);
+}

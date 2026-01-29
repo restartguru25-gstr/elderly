@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,53 +8,16 @@ import { ShoppingBag, Star, Coins, ArrowRight, Heart, Search } from 'lucide-reac
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import type { ShopProduct } from '@/lib/shop-actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const products = [
-  {
-    id: '1',
-    name: 'Health Monitor Device',
-    price: 2999,
-    originalPrice: 3999,
-    coins: 150,
-    rating: 4.8,
-    reviews: 234,
-    imageId: 'product-health-monitor',
-    category: 'Health',
-  },
-  {
-    id: '2',
-    name: 'Comfortable Walking Shoes',
-    price: 2499,
-    originalPrice: 3499,
-    coins: 125,
-    rating: 4.9,
-    reviews: 189,
-    imageId: 'product-shoes',
-    category: 'Comfort',
-  },
-  {
-    id: '3',
-    name: 'Reading Glasses Set',
-    price: 899,
-    originalPrice: 1299,
-    coins: 50,
-    rating: 4.7,
-    reviews: 156,
-    imageId: 'product-glasses',
-    category: 'Essentials',
-  },
-  {
-    id: '4',
-    name: 'Medication Organizer',
-    price: 599,
-    originalPrice: 899,
-    coins: 30,
-    rating: 4.9,
-    reviews: 312,
-    imageId: 'product-organizer',
-    category: 'Health',
-  },
+const fallbackProducts: ShopProduct[] = [
+  { id: '1', name: 'Health Monitor Device', price: 2999, originalPrice: 3999, coins: 150, rating: 4.8, reviews: 234, imageId: 'product-health-monitor', category: 'Health' },
+  { id: '2', name: 'Comfortable Walking Shoes', price: 2499, originalPrice: 3499, coins: 125, rating: 4.9, reviews: 189, imageId: 'product-shoes', category: 'Comfort' },
+  { id: '3', name: 'Reading Glasses Set', price: 899, originalPrice: 1299, coins: 50, rating: 4.7, reviews: 156, imageId: 'product-glasses', category: 'Essentials' },
+  { id: '4', name: 'Medication Organizer', price: 599, originalPrice: 899, coins: 30, rating: 4.9, reviews: 312, imageId: 'product-organizer', category: 'Health' },
 ];
 
 const categories = ['All', 'Health', 'Comfort', 'Essentials', 'Gifts'];
@@ -61,6 +25,23 @@ const categories = ['All', 'Health', 'Comfort', 'Essentials', 'Gifts'];
 export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const firestore = useFirestore();
+  const productsQuery = useMemoFirebase(
+    () => query(collection(firestore, 'shopProducts'), orderBy('createdAt', 'desc'), limit(50)),
+    [firestore]
+  );
+  const { data: productsFromDb, isLoading } = useCollection<ShopProduct>(productsQuery);
+  const allProducts = (productsFromDb && productsFromDb.length > 0) ? productsFromDb : fallbackProducts;
+  const products = useMemo(() => {
+    let list = allProducts;
+    if (selectedCategory !== 'All') {
+      list = list.filter((p) => p.category === selectedCategory);
+    }
+    const q = searchQuery.trim().toLowerCase();
+    if (q) list = list.filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+    return list;
+  }, [allProducts, selectedCategory, searchQuery]);
 
   return (
     <div className="space-y-8">
@@ -124,6 +105,19 @@ export default function ShopPage() {
       </div>
 
       {/* Products Grid */}
+      {isLoading && productsFromDb === null ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-72 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <Card className="border-2">
+          <CardContent className="py-12 text-center text-muted-foreground">
+            No products match your filters. Try a different category or search.
+          </CardContent>
+        </Card>
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {products.map((product, index) => {
           const image =
@@ -183,6 +177,7 @@ export default function ShopPage() {
           );
         })}
       </div>
+      )}
 
       {/* Shop Smart Section */}
       <Card className="border-2">

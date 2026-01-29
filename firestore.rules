@@ -335,7 +335,7 @@ service cloud.firestore {
           request.resource.data.memberIds.hasAny([request.auth.uid])
         )
       );
-      allow delete: if false; // Deleting forums is disabled.
+      allow delete: if isAdmin();
 
       /**
        * @description Manages posts within a community forum.
@@ -452,6 +452,42 @@ service cloud.firestore {
     match /feedback/{feedbackId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow get, list, update, delete: if false;
+    }
+
+    /**
+     * @description Doctors (telemedicine). Admin full CRUD; signed-in users read.
+     * @path /doctors/{doctorId}
+     */
+    match /doctors/{doctorId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Tour packages. Admin full CRUD; signed-in users read.
+     * @path /tours/{tourId}
+     */
+    match /tours/{tourId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Shop products. Admin full CRUD; signed-in users read.
+     * @path /shopProducts/{productId}
+     */
+    match /shopProducts/{productId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Service providers (home nursing, physio, etc.). Admin full CRUD; signed-in users read.
+     * @path /serviceProviders/{providerId}
+     */
+    match /serviceProviders/{providerId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
   }
 }

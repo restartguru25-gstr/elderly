@@ -1,13 +1,20 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar, Users, ArrowRight, Plane, Train, Bus, Star } from 'lucide-react';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import type { Tour } from '@/lib/tours-actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const tours = [
+const TRANSPORT_MAP: Record<string, typeof Plane> = { Plane, Train, Bus };
+
+const fallbackTours: Tour[] = [
   {
     id: '1',
     title: 'Golden Triangle Tour',
@@ -16,7 +23,7 @@ const tours = [
     price: 25000,
     originalPrice: 30000,
     imageId: 'travel-golden-triangle',
-    transport: Plane,
+    transport: 'Bus',
     rating: 4.8,
     reviews: 125,
     features: ['Comfortable A/C coach', 'Senior-friendly itinerary', 'Trained team assistance'],
@@ -29,7 +36,7 @@ const tours = [
     price: 32000,
     originalPrice: 38000,
     imageId: 'travel-kerala',
-    transport: Train,
+    transport: 'Train',
     rating: 4.9,
     reviews: 98,
     features: ['Scenic train journey', 'Houseboat stay', 'Gentle pace'],
@@ -42,7 +49,7 @@ const tours = [
     price: 28000,
     originalPrice: 35000,
     imageId: 'travel-himalayas',
-    transport: Bus,
+    transport: 'Bus',
     rating: 4.7,
     reviews: 87,
     features: ['Mountain views', 'Cool climate', 'Relaxing pace'],
@@ -50,6 +57,14 @@ const tours = [
 ];
 
 export default function ToursPage() {
+  const firestore = useFirestore();
+  const toursQuery = useMemoFirebase(
+    () => query(collection(firestore, 'tours'), orderBy('createdAt', 'desc'), limit(50)),
+    [firestore]
+  );
+  const { data: toursFromDb, isLoading } = useCollection<Tour>(toursQuery);
+  const tours = (toursFromDb && toursFromDb.length > 0) ? toursFromDb : fallbackTours;
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -110,13 +125,20 @@ export default function ToursPage() {
             Special discounts for members
           </Badge>
         </div>
+        {isLoading && toursFromDb === null ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-80 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tours.map((tour, index) => {
             const image =
               PlaceHolderImages.find((p) => p.id === tour.imageId) ||
               PlaceHolderImages.find((p) => p.id === 'travel-golden-triangle') ||
               PlaceHolderImages[0];
-            const TransportIcon = tour.transport;
+            const TransportIcon = TRANSPORT_MAP[tour.transport] || Bus;
             const isFirst = index === 0;
 
             return (
@@ -191,6 +213,7 @@ export default function ToursPage() {
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );
