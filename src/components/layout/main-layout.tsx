@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Search as SearchIcon, Wrench } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Search as SearchIcon, Wrench, ClipboardList } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Logo } from '@/components/logo';
@@ -63,6 +63,7 @@ const navItems = [
   { href: '/dashboard/rewards', icon: Coins, key: 'rewards' },
   { href: '/dashboard/membership', icon: Crown, key: 'membership' },
   { href: '/dashboard/50above50', icon: Trophy, key: '50above50' },
+  { href: '/apply', icon: ClipboardList, key: 'partnerApply' },
   { href: '/dashboard/security', icon: Shield, key: 'security' },
   { href: '/dashboard/connected-devices', icon: Smartphone, key: 'connectedDevices' },
   { href: '/dashboard/emergency', icon: Siren, key: 'sos' },

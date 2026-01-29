@@ -95,7 +95,8 @@
     "sos": "SOS",
     "security": "Security",
     "connectedDevices": "Connected devices",
-    "admin": "Admin"
+    "admin": "Admin",
+    "partnerApply": "List your business"
   },
   "auth": {
     "welcomeBack": "Welcome Back!",

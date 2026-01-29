@@ -75,6 +75,9 @@ export function LandingPage() {
               <Button variant="ghost" asChild>
                 <Link href="#testimonials">{tCommon('stories')}</Link>
               </Button>
+              <Button variant="ghost" asChild>
+                <Link href="/apply">{t('partnerApply')}</Link>
+              </Button>
               <Button variant="outline" onClick={() => setLoginOpen(true)}>
                 {tCommon('signIn')}
               </Button>
@@ -100,7 +103,7 @@ export function LandingPage() {
                       <Link href="#testimonials">{tCommon('stories')}</Link>
                     </Button>
                     <Button variant="ghost" asChild className="justify-start" onClick={() => setMobileMenuOpen(false)}>
-                      <Link href="#partner-form">{t('partnerApply')}</Link>
+                      <Link href="/apply">{t('partnerApply')}</Link>
                     </Button>
                     <Button variant="outline" className="w-full" onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}>
                       {tCommon('signIn')}
@@ -344,7 +347,7 @@ export function LandingPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/about" className="hover:text-primary">{t('footerAbout')}</Link></li>
                 <li><Link href="/contact" className="hover:text-primary">{t('footerContact')}</Link></li>
-                <li><Link href="#partner-form" className="hover:text-primary">{t('partnerApply')}</Link></li>
+                <li><Link href="/apply" className="hover:text-primary">{t('partnerApply')}</Link></li>
                 <li><Link href="/contact" className="hover:text-primary">{tCommon('support')}</Link></li>
               </ul>
             </div>

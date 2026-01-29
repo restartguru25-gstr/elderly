@@ -95,7 +95,8 @@
     "security": "பாதுகாப்பு",
     "connectedDevices": "இணைக்கப்பட்ட சாதனங்கள்",
     "search": "தேடல்",
-    "admin": "நிர்வாகி"
+    "admin": "நிர்வாகி",
+    "partnerApply": "List your business"
   },
   "auth": {
     "welcomeBack": "மீண்டும் வரவேற்கிறோம்!",
