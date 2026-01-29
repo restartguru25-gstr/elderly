@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Logo } from '@/components/logo';
 import { LoginDialog } from './login-dialog';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { PartnerApplicationForm } from './partner-application-form';
 import {
   Sheet,
   SheetContent,
@@ -97,6 +98,9 @@ export function LandingPage() {
                     </Button>
                     <Button variant="ghost" asChild className="justify-start" onClick={() => setMobileMenuOpen(false)}>
                       <Link href="#testimonials">{tCommon('stories')}</Link>
+                    </Button>
+                    <Button variant="ghost" asChild className="justify-start" onClick={() => setMobileMenuOpen(false)}>
+                      <Link href="#partner-form">{t('partnerApply')}</Link>
                     </Button>
                     <Button variant="outline" className="w-full" onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}>
                       {tCommon('signIn')}
@@ -273,6 +277,15 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Partner application form */}
+      <section id="partner-form" className="py-12 sm:py-20 lg:py-32 bg-background/50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl">
+            <PartnerApplicationForm />
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-12 sm:py-20 lg:py-32 bg-gradient-primary text-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -331,6 +344,7 @@ export function LandingPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/about" className="hover:text-primary">{t('footerAbout')}</Link></li>
                 <li><Link href="/contact" className="hover:text-primary">{t('footerContact')}</Link></li>
+                <li><Link href="#partner-form" className="hover:text-primary">{t('partnerApply')}</Link></li>
                 <li><Link href="/contact" className="hover:text-primary">{tCommon('support')}</Link></li>
               </ul>
             </div>

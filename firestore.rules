@@ -477,5 +477,14 @@ service cloud.firestore {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
+
+    /**
+     * Partner applications (doctors, service providers, shops) from landing-page form.
+     * Anyone can create; admin lists, updates, deletes.
+     */
+    match /partnerApplications/{applicationId} {
+      allow create: if true;
+      allow get, list, update, delete: if isAdmin();
+    }
   }
 }

@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Users, Trophy, Briefcase, LayoutDashboard, Stethoscope, Plane, ShoppingBag, Wrench, UsersRound } from 'lucide-react';
+import { Users, Trophy, Briefcase, LayoutDashboard, Stethoscope, Plane, ShoppingBag, Wrench, UsersRound, FileCheck } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const links = [
   { href: '/dashboard/admin/users', label: 'Users', desc: 'Manage user roles and admin flags.', icon: Users },
+  { href: '/dashboard/admin/applications', label: 'Partner applications', desc: 'Review and approve doctor / service / shop applications from landing.', icon: FileCheck },
   { href: '/dashboard/50above50/admin', label: '50Above50 — Approvals', desc: 'Approve or reject contest submissions.', icon: Trophy },
   { href: '/dashboard/admin/skills', label: 'Skill listings', desc: 'Moderate and remove marketplace listings.', icon: Briefcase },
   { href: '/dashboard/admin/community', label: 'Community forums', desc: 'List and delete forums.', icon: UsersRound },
