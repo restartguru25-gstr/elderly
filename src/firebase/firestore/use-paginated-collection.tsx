@@ -86,6 +86,12 @@ export function usePaginatedCollection<T = any>(
         const path = getPathForError(memoizedTargetRefOrQuery);
         const contextualError = new FirestorePermissionError({ operation: 'list', path });
         errorEmitter.emit('permission-error', contextualError);
+        const isPermissionDenied =
+          (e as { code?: string })?.code === 'permission-denied' ||
+          String((e as Error)?.message ?? '').toLowerCase().includes('permission');
+        if (isPermissionDenied) {
+          return { items: [] as WithId<T>[], lastDoc: null, hasMore: false };
+        }
         throw contextualError;
       }
     },

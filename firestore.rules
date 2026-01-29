@@ -120,6 +120,14 @@ service cloud.firestore {
     }
 
     /**
+     * Contest-only admin: email admin@smr.com. Used for submissions list/read so pagination works.
+     * No user-doc lookup — avoids any rule evaluation failure.
+     */
+    function isContestAdmin() {
+      return request.auth != null && request.auth.token.email == 'admin@smr.com';
+    }
+
+    /**
      * Checks if the requesting guardian is linked to the senior (userId) and has permission.
      * @param userId The senior's user ID
      * @param permissionType 'vitals' or 'location' - the permission to check
@@ -361,53 +369,22 @@ service cloud.firestore {
 
     /**
      * 50Above50 contest submissions and votes.
-     * Paths:
-     * - /contests/50above50/submissions/{submissionId}
-     * - /contests/50above50/submissions/{submissionId}/votes/{voterId}
-     *
-     * read != list: collection queries use LIST. Explicit allow list is required.
-     * Admin (admin@smr.com or user doc) can list/get all. Others: approved only or own.
+     * Pagination uses LIST; allow list required. Admin = admin@smr.com (isContestAdmin).
      */
     match /contests/{contestId} {
       allow read: if true;
 
       match /submissions/{submissionId} {
-        // Explicit allow list — fixes "Missing or insufficient permissions" on collection queries.
-        allow list: if isSignedIn()
-          && (
-            resource.data.status == 'approved'
-            || resource.data.userId == request.auth.uid
-            || isAdmin()
-          );
-        allow get: if isSignedIn()
-          && (
-            resource.data.status == 'approved'
-            || resource.data.userId == request.auth.uid
-            || isAdmin()
-          );
-
-        allow create: if isSignedIn()
-          && request.resource.data.userId == request.auth.uid
-          && request.resource.data.status == 'pending'
-          && request.resource.data.voteCount == 0;
-
-        allow update: if isSignedIn() && (
-          (
-            resource.data.userId == request.auth.uid
-            && resource.data.status == 'pending'
-            && request.resource.data.userId == resource.data.userId
-            && request.resource.data.status == resource.data.status
-            && request.resource.data.voteCount == resource.data.voteCount
-          )
-          || isAdmin()
-        );
-        allow delete: if isAdmin();
+        allow list: if isContestAdmin();
+        allow get: if isContestAdmin();
+        allow create: if request.auth != null;
+        allow update, delete: if isContestAdmin();
 
         match /votes/{voterId} {
           allow create: if isSignedIn() && request.auth.uid == voterId;
-          allow get: if isSignedIn() && (request.auth.uid == voterId || isAdmin());
+          allow get: if isSignedIn() && (request.auth.uid == voterId || isContestAdmin());
           allow list: if false;
-          allow delete: if isAdmin();
+          allow delete: if isContestAdmin();
         }
       }
     }
