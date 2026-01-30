@@ -31,7 +31,7 @@ const quickActions = [
   {
     icon: Phone,
     label: 'Call Family',
-    href: '/dashboard/community',
+    href: '/dashboard/family',
     color: 'bg-blue-500 hover:bg-blue-600',
     tooltip: 'Contact family',
   },

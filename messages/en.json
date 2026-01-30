@@ -219,7 +219,9 @@
     "loading": "Loading...",
     "noneLinked": "No one linked yet.",
     "senior": "Senior",
-    "guardian": "Guardian"
+    "guardian": "Guardian",
+    "call": "Call",
+    "noPhone": "Add phone number in profile to enable calling"
   },
   "memoryLane": {
     "badge": "AI-Powered",

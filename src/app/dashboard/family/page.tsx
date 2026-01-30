@@ -14,10 +14,10 @@ import {
   getLinkedUserIds,
   linkGuardianToSeniorByCode,
 } from '@/lib/family-linking';
-import { Copy, Link2, Loader2, UserPlus, Users } from 'lucide-react';
+import { Copy, Link2, Loader2, UserPlus, Users, Phone } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-type Profile = { id: string; firstName?: string; lastName?: string; userType?: string };
+type Profile = { id: string; firstName?: string; lastName?: string; userType?: string; phone?: string };
 
 export default function FamilyPage() {
   const { user, isUserLoading } = useUser();
@@ -233,22 +233,44 @@ export default function FamilyPage() {
             <p className="text-muted-foreground">{t('noneLinked')}</p>
           ) : (
             <ul className="space-y-3">
-              {linkedList.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex items-center gap-3 rounded-lg border-2 bg-muted/30 px-4 py-3"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{displayName(p)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.userType === 'senior' ? t('senior') : t('guardian')}
-                    </p>
-                  </div>
-                </li>
-              ))}
+              {linkedList.map((p) => {
+                const phone = p.phone?.trim();
+                const canCall = !!phone && /[0-9]/.test(phone);
+                return (
+                  <li
+                    key={p.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border-2 bg-muted/30 px-4 py-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                        <Users className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium">{displayName(p)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.userType === 'senior' ? t('senior') : t('guardian')}
+                        </p>
+                        {phone && (
+                          <p className="text-xs text-muted-foreground truncate">{phone}</p>
+                        )}
+                      </div>
+                    </div>
+                    {canCall ? (
+                      <Button size="sm" className="shrink-0" asChild>
+                        <a href={`tel:${phone}`}>
+                          <Phone className="mr-1 h-4 w-4" />
+                          {t('call')}
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" disabled className="shrink-0" title={t('noPhone')}>
+                        <Phone className="mr-1 h-4 w-4" />
+                        {t('call')}
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </CardContent>
