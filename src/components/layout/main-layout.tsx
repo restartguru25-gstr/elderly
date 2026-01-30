@@ -9,8 +9,12 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -21,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Wrench, ClipboardList } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Wrench, ClipboardList, ChevronDown } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Logo } from '@/components/logo';
@@ -46,26 +50,36 @@ import { cn } from '@/lib/utils';
 import { isSuperAdmin } from '@/lib/constants';
 import { updateUserProfile } from '@/lib/user-actions';
 
+const MEDICAL_PATHS = ['/dashboard/telemedicine', '/dashboard/medications', '/dashboard/vitals', '/dashboard/medical-records'];
+
+const medicalSubItems = [
+  { href: '/dashboard/telemedicine', icon: Stethoscope, key: 'telemedicine' },
+  { href: '/dashboard/medications', icon: Pill, key: 'medications' },
+  { href: '/dashboard/vitals', icon: HeartPulse, key: 'vitals' },
+  { href: '/dashboard/medical-records', icon: FileText, key: 'medicalRecords' },
+];
+
+const ACCOUNT_PATHS = ['/dashboard/rewards', '/dashboard/membership', '/dashboard/security'];
+
+const accountSubItems = [
+  { href: '/dashboard/rewards', icon: Coins, key: 'rewards' },
+  { href: '/dashboard/membership', icon: Crown, key: 'membership' },
+  { href: '/dashboard/security', icon: Shield, key: 'security' },
+];
+
 const navItems = [
   { href: '/dashboard', icon: Home, key: 'dashboard' },
   { href: '/dashboard/profile', icon: User, key: 'profile' },
   { href: '/dashboard/family', icon: UsersRound, key: 'family' },
   { href: '/dashboard/memory-lane', icon: Image, key: 'memoryLane' },
-  { href: '/dashboard/telemedicine', icon: Stethoscope, key: 'telemedicine' },
-  { href: '/dashboard/medications', icon: Pill, key: 'medications' },
-  { href: '/dashboard/vitals', icon: HeartPulse, key: 'vitals' },
-  { href: '/dashboard/medical-records', icon: FileText, key: 'medicalRecords' },
   { href: '/dashboard/community', icon: Users, key: 'community' },
   { href: '/dashboard/messages', icon: MessageSquare, key: 'messages' },
   { href: '/dashboard/skills-marketplace', icon: Briefcase, key: 'skillsMarketplace' },
   { href: '/dashboard/services', icon: Wrench, key: 'services' },
   { href: '/dashboard/tours', icon: Plane, key: 'tours' },
   { href: '/dashboard/shop', icon: ShoppingBag, key: 'shop' },
-  { href: '/dashboard/rewards', icon: Coins, key: 'rewards' },
-  { href: '/dashboard/membership', icon: Crown, key: 'membership' },
   { href: '/dashboard/50above50', icon: Trophy, key: '50above50' },
   { href: '/apply', icon: ClipboardList, key: 'partnerApply' },
-  { href: '/dashboard/security', icon: Shield, key: 'security' },
   { href: '/dashboard/connected-devices', icon: Smartphone, key: 'connectedDevices' },
   { href: '/dashboard/emergency', icon: Siren, key: 'sos' },
   { href: '/dashboard/admin', icon: ShieldCheck, key: 'admin' },
@@ -132,7 +146,164 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {navItems.map((item) => {
+            {navItems.slice(0, 4).map((item) => {
+              if (item.key === 'admin' && !isAdmin) return null;
+              const label = tNav(item.key);
+              const isActive = pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard');
+              return (
+                <SidebarMenuItem key={item.key}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={{
+                      children: label,
+                      className: 'bg-primary text-primary-foreground'
+                    }}
+                    className={cn(
+                      isActive && 'bg-gradient-primary/10 text-primary-foreground border-l-4 border-primary',
+                      'transition-all duration-200 hover:bg-sidebar-accent/50'
+                    )}
+                  >
+                    <Link href={item.href} prefetch>
+                      <item.icon className={cn(
+                        isActive && 'text-primary',
+                        'transition-colors'
+                      )} />
+                      <span className={cn(isActive && 'font-semibold')}>{label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+            <Collapsible
+              defaultOpen={MEDICAL_PATHS.some((p) => pathname.startsWith(p))}
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton
+                    isActive={MEDICAL_PATHS.some((p) => pathname.startsWith(p))}
+                    tooltip={{
+                      children: tNav('medical'),
+                      className: 'bg-primary text-primary-foreground'
+                    }}
+                    className={cn(
+                      MEDICAL_PATHS.some((p) => pathname.startsWith(p)) && 'bg-gradient-primary/10 text-primary-foreground border-l-4 border-primary',
+                      'transition-all duration-200 hover:bg-sidebar-accent/50 w-full'
+                    )}
+                  >
+                    <Stethoscope className={cn(
+                      MEDICAL_PATHS.some((p) => pathname.startsWith(p)) && 'text-primary',
+                      'transition-colors'
+                    )} />
+                    <span className={cn(MEDICAL_PATHS.some((p) => pathname.startsWith(p)) && 'font-semibold')}>
+                      {tNav('medical')}
+                    </span>
+                    <ChevronDown className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {medicalSubItems.map((sub) => {
+                      const subLabel = tNav(sub.key);
+                      const subActive = pathname.startsWith(sub.href);
+                      return (
+                        <SidebarMenuSubItem key={sub.key}>
+                          <SidebarMenuSubButton asChild isActive={subActive}>
+                            <Link href={sub.href} prefetch>
+                              <sub.icon className={cn(
+                                subActive && 'text-primary',
+                                'transition-colors'
+                              )} />
+                              <span className={cn(subActive && 'font-semibold')}>{subLabel}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+            {navItems.slice(4, 10).map((item) => {
+              const label = tNav(item.key);
+              const isActive = pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard');
+              return (
+                <SidebarMenuItem key={item.key}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={{
+                      children: label,
+                      className: 'bg-primary text-primary-foreground'
+                    }}
+                    className={cn(
+                      isActive && 'bg-gradient-primary/10 text-primary-foreground border-l-4 border-primary',
+                      'transition-all duration-200 hover:bg-sidebar-accent/50'
+                    )}
+                  >
+                    <Link href={item.href} prefetch>
+                      <item.icon className={cn(
+                        isActive && 'text-primary',
+                        'transition-colors'
+                      )} />
+                      <span className={cn(isActive && 'font-semibold')}>{label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+            <Collapsible
+              defaultOpen={ACCOUNT_PATHS.some((p) => pathname.startsWith(p))}
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton
+                    isActive={ACCOUNT_PATHS.some((p) => pathname.startsWith(p))}
+                    tooltip={{
+                      children: tNav('account'),
+                      className: 'bg-primary text-primary-foreground'
+                    }}
+                    className={cn(
+                      ACCOUNT_PATHS.some((p) => pathname.startsWith(p)) && 'bg-gradient-primary/10 text-primary-foreground border-l-4 border-primary',
+                      'transition-all duration-200 hover:bg-sidebar-accent/50 w-full'
+                    )}
+                  >
+                    <Coins className={cn(
+                      ACCOUNT_PATHS.some((p) => pathname.startsWith(p)) && 'text-primary',
+                      'transition-colors'
+                    )} />
+                    <span className={cn(ACCOUNT_PATHS.some((p) => pathname.startsWith(p)) && 'font-semibold')}>
+                      {tNav('account')}
+                    </span>
+                    <ChevronDown className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {accountSubItems.map((sub) => {
+                      const subLabel = tNav(sub.key);
+                      const subActive = pathname.startsWith(sub.href);
+                      return (
+                        <SidebarMenuSubItem key={sub.key}>
+                          <SidebarMenuSubButton asChild isActive={subActive}>
+                            <Link href={sub.href} prefetch>
+                              <sub.icon className={cn(
+                                subActive && 'text-primary',
+                                'transition-colors'
+                              )} />
+                              <span className={cn(subActive && 'font-semibold')}>{subLabel}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+            {navItems.slice(10).map((item) => {
               if (item.key === 'admin' && !isAdmin) return null;
               const label = tNav(item.key);
               const isActive = pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard');
