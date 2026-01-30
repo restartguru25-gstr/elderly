@@ -142,13 +142,13 @@ export default function TelemedicinePage() {
       </div>
 
       {doctorsLoading && doctorsFromDb === null ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 grid-mobile-fix w-full">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-56 w-full rounded-xl" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 grid-mobile-fix w-full">
           {doctors.map((doctor) => {
             const image = PlaceHolderImages.find((p) => p.id === (doctor.imageId || 'doctor-avatar-1'));
             return (

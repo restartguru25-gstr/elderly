@@ -331,7 +331,7 @@ export default function MedicationsPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:gap-8 md:grid-cols-3 grid-mobile-fix w-full">
       {!isGuardianView && (
         <div className="md:col-span-1">
           <Card>

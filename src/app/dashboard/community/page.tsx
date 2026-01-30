@@ -59,7 +59,7 @@ function ForumCard({ group }: { group: WithId<CommunityForum> }) {
 
   return (
     <Link href={`/dashboard/community/${group.id}`} className="block group">
-      <Card className="overflow-hidden flex flex-col h-full border-2 transition-all duration-300 hover:border-primary hover:shadow-warm">
+      <Card className="overflow-hidden flex flex-col h-full min-w-0 border-2 transition-all duration-300 hover:border-primary hover:shadow-warm">
         {image && (
           <div className="relative h-48 w-full overflow-hidden">
             <Image
@@ -156,7 +156,7 @@ export default function CommunityPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 grid-mobile-fix w-full">
             {upcomingEvents.map((event) => (
               <Card
                 key={event.id}
@@ -200,14 +200,14 @@ export default function CommunityPage() {
       <div>
         <h2 className="text-2xl font-bold mb-4">Community Forums</h2>
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 grid-mobile-fix w-full">
             <Skeleton className="h-80 w-full rounded-xl" />
             <Skeleton className="h-80 w-full rounded-xl" />
             <Skeleton className="h-80 w-full rounded-xl" />
           </div>
         ) : forums && forums.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 grid-mobile-fix w-full">
               {forums.map((group) => (
                 <ForumCard key={group.id} group={group} />
               ))}

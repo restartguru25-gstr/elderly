@@ -308,7 +308,7 @@ export default function VitalsPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-3 grid-mobile-fix w-full">
         {!isGuardianView && (
           <div className="lg:col-span-1">
             <Card className="border-2 shadow-soft sticky top-24">

@@ -234,14 +234,14 @@ export default function SkillsMarketplacePage() {
 
       {/* Listings grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 grid-mobile-fix w-full">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-72 w-full rounded-xl" />
           ))}
         </div>
       ) : listings && listings.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 grid-mobile-fix w-full">
             {listings.map((skill: WithId<SkillListing>) => {
               const image =
                 PlaceHolderImages.find((p) => p.id === skill.imageId) ||

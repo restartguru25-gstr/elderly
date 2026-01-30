@@ -58,7 +58,7 @@ export default function ShopPage() {
       {/* Benefits Banner */}
       <Card className="border-2 bg-gradient-to-br from-primary/5 to-accent/5">
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 grid-mobile-fix w-full">
             {[
               { icon: ShoppingBag, text: 'Handpicked products curated for seniors' },
               { icon: Heart, text: 'Support health, comfort, and convenience' },
@@ -66,8 +66,8 @@ export default function ShopPage() {
             ].map((item, index) => {
               const Icon = item.icon;
               return (
-                <div key={index} className="flex items-center gap-3">
-                  <div className="rounded-full bg-gradient-primary p-2">
+                <div key={index} className="flex items-center gap-3 min-w-0">
+                  <div className="rounded-full bg-gradient-primary p-2 shrink-0">
                     <Icon className="h-5 w-5 text-white" />
                   </div>
                   <span className="text-sm">{item.text}</span>
@@ -106,7 +106,7 @@ export default function ShopPage() {
 
       {/* Products Grid */}
       {isLoading && productsFromDb === null ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 grid-mobile-fix w-full">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-72 w-full rounded-xl" />
           ))}
@@ -118,7 +118,7 @@ export default function ShopPage() {
           </CardContent>
         </Card>
       ) : (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 grid-mobile-fix w-full">
         {products.map((product, index) => {
           const image =
             PlaceHolderImages.find((p) => p.id === product.imageId) ||
@@ -186,7 +186,7 @@ export default function ShopPage() {
           <CardDescription>Enjoy exclusive benefits when you shop with ElderLink</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 grid-mobile-fix w-full">
             {[
               {
                 title: 'Earn Coins',

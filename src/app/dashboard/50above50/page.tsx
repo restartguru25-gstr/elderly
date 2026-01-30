@@ -472,14 +472,14 @@ export default function FiftyAboveFiftyPage() {
               <Button variant="outline" onClick={() => void refreshApproved()}>Try again</Button>
             </div>
           ) : approvedLoading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 grid-mobile-fix w-full">
               <Skeleton className="h-72 w-full rounded-xl" />
               <Skeleton className="h-72 w-full rounded-xl" />
               <Skeleton className="h-72 w-full rounded-xl" />
             </div>
           ) : approved && approved.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 grid-mobile-fix w-full">
                 {approved.map((s: any) => {
                   const image =
                     (s.photoUrl ? null : PlaceHolderImages.find((p) => p.id === 'community-singing')) ??
@@ -623,7 +623,7 @@ export default function FiftyAboveFiftyPage() {
             Choose your talent category and submit your entry
           </p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 grid-mobile-fix w-full">
           {categories.map((category) => (
             <Card
               key={category.id}

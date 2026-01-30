@@ -84,7 +84,7 @@ export default function ToursPage() {
           <CardDescription>Why Travel with ElderLink?</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 grid-mobile-fix w-full">
             {[
               {
                 title: 'Comfortable Travel',
@@ -126,13 +126,13 @@ export default function ToursPage() {
           </Badge>
         </div>
         {isLoading && toursFromDb === null ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 grid-mobile-fix w-full">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-80 w-full rounded-xl" />
             ))}
           </div>
         ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 grid-mobile-fix w-full">
           {tours.map((tour, index) => {
             const image =
               PlaceHolderImages.find((p) => p.id === tour.imageId) ||

@@ -72,7 +72,7 @@ export default function MembershipPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 grid-mobile-fix w-full">
             {benefitKeys.map((key) => (
               <div key={key} className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
                 <Trophy className="h-5 w-5 text-primary flex-shrink-0" />

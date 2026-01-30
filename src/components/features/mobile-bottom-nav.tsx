@@ -11,7 +11,7 @@ const mobileNavItems = [
   { href: '/dashboard', icon: Home, key: 'dashboard' as const },
   { href: '/dashboard/vitals', icon: HeartPulse, key: 'vitals' as const },
   { href: '/dashboard/community', icon: Users, key: 'community' as const },
-  { href: '/dashboard/skills-marketplace', icon: Briefcase, key: 'skillsMarketplace' as const },
+  { href: '/dashboard/skills-marketplace', icon: Briefcase, key: 'skillsMarketplace' as const, mobileKey: 'skillsMarketplaceShort' as const },
   { href: '/dashboard/profile', icon: User, key: 'profile' as const },
 ];
 
@@ -56,7 +56,7 @@ export function MobileBottomNav() {
                   isActive && 'font-semibold'
                 )}
               >
-                {t(item.key)}
+                {'mobileKey' in item && item.mobileKey ? t(item.mobileKey) : t(item.key)}
               </span>
               {isActive && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 rounded-b-full bg-primary" />

@@ -391,7 +391,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </header>
         <FCMForegroundToaster />
         <FCMBanner />
-        <main id="main-content" className="flex-1 p-4 sm:px-6 sm:py-0 pb-20 md:pb-4" tabIndex={-1}>{children}</main>
+        <main id="main-content" className="flex-1 min-w-0 w-full max-w-full overflow-x-hidden p-4 sm:px-6 sm:py-0 pb-20 md:pb-4" tabIndex={-1}>
+          <div className="min-w-0 w-full">{children}</div>
+        </main>
         <CommunityQuickChat />
         <QuickActionsBar />
         <MobileBottomNav />

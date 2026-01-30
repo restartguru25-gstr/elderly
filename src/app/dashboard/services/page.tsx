@@ -35,15 +35,15 @@ export default function ServicesPage() {
 
       <Card className="border-2 bg-gradient-to-br from-primary/5 to-accent/5">
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-gradient-primary p-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 grid-mobile-fix w-full">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="rounded-full bg-gradient-primary p-2 shrink-0">
                 <Wrench className="h-5 w-5 text-white" />
               </div>
               <span className="text-sm">Verified service providers</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-gradient-primary p-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="rounded-full bg-gradient-primary p-2 shrink-0">
                 <Heart className="h-5 w-5 text-white" />
               </div>
               <span className="text-sm">Senior-friendly care</span>
@@ -55,7 +55,7 @@ export default function ServicesPage() {
       <div>
         <h2 className="text-2xl font-bold mb-6">Available services</h2>
         {isLoading && providers === null ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 grid-mobile-fix w-full">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-48 w-full rounded-xl" />
             ))}
@@ -67,7 +67,7 @@ export default function ServicesPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 grid-mobile-fix w-full">
             {providers.map((p) => {
               const image = p.imageId
                 ? PlaceHolderImages.find((i) => i.id === p.imageId)

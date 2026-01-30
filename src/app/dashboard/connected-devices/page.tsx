@@ -279,13 +279,13 @@ export default function ConnectedDevicesPage() {
 
       {/* Connected Devices List */}
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="h-40 w-full rounded-xl" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 grid-mobile-fix w-full">
+          <Skeleton className="h-40 w-full rounded-xl min-w-0" />
           <Skeleton className="h-40 w-full rounded-xl" />
           <Skeleton className="h-40 w-full rounded-xl" />
         </div>
       ) : devices && devices.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 grid-mobile-fix w-full">
           {devices.map((device) => {
             const meta = getDeviceMeta(device.deviceType);
             const Icon = meta.icon;
@@ -383,7 +383,7 @@ export default function ConnectedDevicesPage() {
       {/* Supported Devices */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Supported Device Types</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 grid-mobile-fix w-full">
           {DEVICE_TYPES.slice(0, -1).map((device) => {
             const Icon = device.icon;
             return (

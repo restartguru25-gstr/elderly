@@ -89,7 +89,7 @@ export function SeniorDashboard({ userProfile }: { userProfile: WithId<UserProfi
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 grid-mobile-fix w-full">
                     {quickStats.map((stat, index) => (
                         <Card key={index} className="border-2 hover:border-primary/50 transition-colors">
                             <CardContent className="p-4 sm:p-5">
@@ -104,7 +104,7 @@ export function SeniorDashboard({ userProfile }: { userProfile: WithId<UserProfi
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-start grid-mobile-fix w-full">
                 <div className="lg:col-span-2 space-y-6 sm:space-y-8">
                     {/* Daily Check-in */}
                     <DailyCheckinCard />
@@ -118,7 +118,7 @@ export function SeniorDashboard({ userProfile }: { userProfile: WithId<UserProfi
                                 Explore all features
                             </Badge>
                         </div>
-                        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 grid-mobile-fix w-full">
                             {mainTiles.map((tile, index) => (
                                 <Link href={tile.href} key={tile.label}>
                                     <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:border-primary hover:shadow-warm h-full animate-fade-in-up"
