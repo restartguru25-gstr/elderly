@@ -305,6 +305,17 @@ service cloud.firestore {
         allow update: if isExistingOwner(userId);
         allow delete: if isExistingOwner(userId);
       }
+
+      /**
+       * @description Connected devices (wearables, health monitors) for a user.
+       * @path /users/{userId}/connectedDevices/{deviceId}
+       * @principle Restricts all access to the user's own devices.
+       */
+      match /connectedDevices/{deviceId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
     }
 
     /**
@@ -364,6 +375,17 @@ service cloud.firestore {
         allow list, get: if isSignedIn();
         allow create: if isForumMember(communityForumId) && request.resource.data.authorId == request.auth.uid;
         allow update, delete: if isForumMember(communityForumId) && resource.data.authorId == request.auth.uid;
+      }
+
+      /**
+       * @description Real-time chat messages within a community forum.
+       * @path /communityForums/{communityForumId}/chatMessages/{messageId}
+       * @principle Only forum members can read and send chat messages. Messages are immutable.
+       */
+      match /chatMessages/{messageId} {
+        allow get, list: if isForumMember(communityForumId);
+        allow create: if isForumMember(communityForumId) && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if false; // Chat messages are immutable
       }
     }
 

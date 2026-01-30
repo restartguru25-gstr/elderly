@@ -21,13 +21,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Search as SearchIcon, Wrench, ClipboardList } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Wrench, ClipboardList } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Logo } from '@/components/logo';
 import { SOSButton } from '../features/sos-button';
 import { QuickActionsBar } from '../features/quick-actions-bar';
 import { MobileBottomNav } from '../features/mobile-bottom-nav';
+import { CommunityQuickChat } from '../features/community-quick-chat';
+import { HeaderSearch } from '../features/header-search';
 import { LanguageSwitcher } from '../language-switcher';
 import { A11yToolbar } from '../features/a11y-toolbar';
 import { ConnectionIndicator } from '../features/connection-indicator';
@@ -48,7 +50,6 @@ const navItems = [
   { href: '/dashboard', icon: Home, key: 'dashboard' },
   { href: '/dashboard/profile', icon: User, key: 'profile' },
   { href: '/dashboard/family', icon: UsersRound, key: 'family' },
-  { href: '/dashboard/search', icon: SearchIcon, key: 'search' },
   { href: '/dashboard/memory-lane', icon: Image, key: 'memoryLane' },
   { href: '/dashboard/telemedicine', icon: Stethoscope, key: 'telemedicine' },
   { href: '/dashboard/medications', icon: Pill, key: 'medications' },
@@ -167,6 +168,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 py-2">
           <SidebarTrigger className="sm:hidden" aria-label={tCommon('navigation')} />
           <div className="flex-1" />
+          <HeaderSearch />
           <ConnectionIndicator />
           <LanguageSwitcher />
           <NotificationCenter />
@@ -219,6 +221,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <FCMForegroundToaster />
         <FCMBanner />
         <main id="main-content" className="flex-1 p-4 sm:px-6 sm:py-0 pb-20 md:pb-4" tabIndex={-1}>{children}</main>
+        <CommunityQuickChat />
         <QuickActionsBar />
         <MobileBottomNav />
       </SidebarInset>

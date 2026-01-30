@@ -193,15 +193,15 @@ export function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-6 sm:gap-8 md:grid-cols-4">
             {statsMeta.map((stat, index) => (
-              <AnimateOnScroll key={stat.key} delay={index * 0.08}>
-                <div className="group text-center rounded-2xl border-2 border-transparent bg-card/80 p-6 shadow-soft hover-lift hover-lift-shadow hover:border-primary/30 transition-all duration-300">
-                  <div className="mb-3 sm:mb-4 flex justify-center">
+              <AnimateOnScroll key={stat.key} delay={index * 0.08} className="h-full">
+                <div className="group flex h-full min-h-[160px] sm:min-h-[180px] flex-col items-center justify-center rounded-2xl border-2 border-transparent bg-card/80 p-6 shadow-soft hover-lift hover-lift-shadow hover:border-primary/30 transition-all duration-300">
+                  <div className="mb-3 sm:mb-4 flex shrink-0 justify-center">
                     <div className="rounded-full bg-gradient-primary p-3 sm:p-4 transition-transform duration-300 group-hover:scale-110">
                       <stat.icon className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                     </div>
                   </div>
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">{stat.value}</div>
-                  <div className="mt-1 sm:mt-2 text-xs sm:text-sm lg:text-base text-muted-foreground">{t(`stats.${stat.key}`)}</div>
+                  <div className="mt-1 sm:mt-2 min-h-[2.5rem] text-center text-xs sm:text-sm lg:text-base text-muted-foreground">{t(`stats.${stat.key}`)}</div>
                 </div>
               </AnimateOnScroll>
             ))}
@@ -229,15 +229,15 @@ export function LandingPage() {
               const meta = featureMeta[index];
               const Icon = meta.icon;
               return (
-                <AnimateOnScroll key={key} delay={index * 0.1}>
-                  <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:border-primary hover:shadow-warm hover-lift hover-lift-shadow">
-                    <CardContent className="p-6">
-                      <div className={`mb-4 inline-flex rounded-xl bg-gradient-to-br ${meta.color} p-4 transition-transform duration-300 group-hover:scale-110`}>
+                <AnimateOnScroll key={key} delay={index * 0.1} className="h-full">
+                  <Card className="group relative flex h-full flex-col overflow-hidden border-2 transition-all duration-300 hover:border-primary hover:shadow-warm hover-lift hover-lift-shadow">
+                    <CardContent className="flex flex-1 flex-col p-6">
+                      <div className={`mb-4 shrink-0 inline-flex rounded-xl bg-gradient-to-br ${meta.color} p-4 transition-transform duration-300 group-hover:scale-110`}>
                         <Icon className="h-8 w-8 text-white" />
                       </div>
-                      <h3 className="mb-2 text-xl font-bold">{tFeat(`${key}Title`)}</h3>
-                      <p className="text-muted-foreground">{tFeat(`${key}Desc`)}</p>
-                      <Button variant="ghost" className="mt-4 group-hover:text-primary transition-colors duration-300" asChild>
+                      <h3 className="mb-2 shrink-0 text-xl font-bold">{tFeat(`${key}Title`)}</h3>
+                      <p className="flex-1 text-muted-foreground">{tFeat(`${key}Desc`)}</p>
+                      <Button variant="ghost" className="mt-4 shrink-0 group-hover:text-primary transition-colors duration-300" asChild>
                         <Link href="/signup" className="inline-flex items-center">
                           {tCommon('exploreNow')}
                           <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -267,12 +267,12 @@ export function LandingPage() {
           </AnimateOnScroll>
           <div className="grid gap-8 md:grid-cols-3">
             {testimonials.map((testimonial, index) => (
-              <AnimateOnScroll key={index} delay={index * 0.1}>
-                <Card className="group border-2 transition-all duration-300 hover:border-primary hover:shadow-soft-lg hover-lift hover-lift-shadow">
-                  <CardContent className="p-6">
-                    <div className="mb-4 text-4xl text-primary transition-transform duration-300 group-hover:scale-110">"</div>
-                    <p className="mb-6 text-muted-foreground">{testimonial.text}</p>
-                    <div>
+              <AnimateOnScroll key={index} delay={index * 0.1} className="h-full">
+                <Card className="group flex h-full flex-col border-2 transition-all duration-300 hover:border-primary hover:shadow-soft-lg hover-lift hover-lift-shadow">
+                  <CardContent className="flex flex-1 flex-col p-6">
+                    <div className="mb-4 shrink-0 text-4xl text-primary transition-transform duration-300 group-hover:scale-110">"</div>
+                    <p className="mb-6 flex-1 text-muted-foreground">{testimonial.text}</p>
+                    <div className="shrink-0">
                       <div className="font-semibold">{testimonial.name}</div>
                       <div className="text-sm text-muted-foreground">
                         {testimonial.role} • {testimonial.location}
