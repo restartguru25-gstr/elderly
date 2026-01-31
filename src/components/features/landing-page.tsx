@@ -334,7 +334,7 @@ export function LandingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto border-2 border-white text-white hover:bg-white/10 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 h-auto transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+                  className="w-full sm:w-auto border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 h-auto transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
                   onClick={() => setLoginOpen(true)}
                 >
                   {tCommon('signIn')}
