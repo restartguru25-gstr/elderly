@@ -112,7 +112,10 @@
     "sendResetLink": "Send Reset Link",
     "backToLogin": "Back to Login",
     "noAccount": "Don't have an account?",
-    "signUp": "Sign up"
+    "signUp": "Sign up",
+    "acceptTerms": "I accept the",
+    "acceptTermsSuffix": "Privacy Policy, Refund Policy, Terms & Conditions, Terms of Service, and all other policies required by payment gateways and Indian regulations.",
+    "acceptTermsRequired": "You must accept all terms and conditions to create an account."
   },
   "dashboard": {
     "hello": "Hello",

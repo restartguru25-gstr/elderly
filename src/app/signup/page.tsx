@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
@@ -11,6 +12,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -19,15 +21,17 @@ import { useAuth, useFirestore } from '@/firebase';
 import { createUserProfile } from '@/lib/user-actions';
 import { Loader2, User, Users, Check, ArrowLeft, Sparkles, Clock, Shield } from 'lucide-react';
 
-const formSchema = z.object({
-  firstName: z.string().min(1, 'First name is required.'),
-  lastName: z.string().min(1, 'Last name is required.'),
-  email: z.string().email('Invalid email address.'),
-  password: z.string().min(6, 'Password must be at least 6 characters.'),
-  role: z.enum(['senior', 'guardian'], { required_error: 'Please select a role.' }),
-});
+const createFormSchema = (acceptTermsError: string) =>
+  z.object({
+    firstName: z.string().min(1, 'First name is required.'),
+    lastName: z.string().min(1, 'Last name is required.'),
+    email: z.string().email('Invalid email address.'),
+    password: z.string().min(6, 'Password must be at least 6 characters.'),
+    role: z.enum(['senior', 'guardian'], { required_error: 'Please select a role.' }),
+    acceptTerms: z.literal(true, { errorMap: () => ({ message: acceptTermsError }) }),
+  });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
 
 const benefits = [
   { icon: Users, text: 'Join thousands of happy seniors' },
@@ -41,8 +45,13 @@ export default function SignupPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  const t = useTranslations('auth');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'senior' | 'guardian' | null>(null);
+  const formSchema = React.useMemo(
+    () => createFormSchema('You must accept all terms and conditions to create an account.'),
+    []
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -52,6 +61,7 @@ export default function SignupPage() {
       email: '',
       password: '',
       role: undefined,
+      acceptTerms: false,
     },
   });
 
@@ -349,6 +359,35 @@ export default function SignupPage() {
                             />
                           </FormControl>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Terms & Conditions Checkbox */}
+                    <FormField
+                      control={form.control}
+                      name="acceptTerms"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start gap-3 space-y-0 rounded-md border p-4">
+                          <FormControl>
+                            <Checkbox
+                              id="accept-terms"
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <Label
+                              htmlFor="accept-terms"
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              {t('acceptTerms')}{' '}
+                              <Link href="/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
+                              , <Link href="/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>Terms & Conditions</Link>
+                              , {t('acceptTermsSuffix')}
+                            </Label>
+                            <FormMessage />
+                          </div>
                         </FormItem>
                       )}
                     />
