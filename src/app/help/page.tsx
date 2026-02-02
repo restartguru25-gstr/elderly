@@ -8,10 +8,10 @@ import {
   Users,
   Shield,
   Bell,
-  HelpCircle,
   FileQuestion,
   MessageCircle,
   LayoutDashboard,
+  MessageSquare,
 } from 'lucide-react';
 
 export const metadata = {
@@ -129,7 +129,7 @@ export default function HelpPage() {
         </Button>
         <Button variant="outline" asChild>
           <Link href="/dashboard/feedback">
-            <HelpCircle className="mr-2 h-4 w-4" />
+            <MessageSquare className="mr-2 h-4 w-4" />
             Send feedback
           </Link>
         </Button>

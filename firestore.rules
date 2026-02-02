@@ -316,6 +316,48 @@ service cloud.firestore {
         allow create: if isOwner(userId);
         allow update, delete: if isExistingOwner(userId);
       }
+
+      /**
+       * @description Daily Health Check-in answers (wellness questions).
+       * @path /users/{userId}/healthCheckinAnswers/{answerId}
+       * @principle Owner only. Used for progressive health profiling.
+       */
+      match /healthCheckinAnswers/{answerId} {
+        allow get, list, create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Summarized health profile (auto-generated from answers).
+       * @path /users/{userId}/healthProfileData/current
+       * @principle Owner read/write.
+       */
+      match /healthProfileData/{docId} {
+        allow get, create, update: if isOwner(userId);
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Daily Health Check-in question bank. Admin CRUD; signed-in users read.
+     * @path /healthQuestions/{questionId}
+     */
+    match /healthQuestions/{questionId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Topic-based quizzes. Admin CRUD; signed-in users read.
+     * @path /quizzes/{quizId}
+     */
+    match /quizzes/{quizId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+      match /questions/{questionId} {
+        allow get, list: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+      }
     }
 
     /**
