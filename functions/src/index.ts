@@ -213,3 +213,21 @@ export const onFiftyAboveFiftyVoteCreated = onDocumentCreated(
     );
   }
 );
+
+/** Referral: increment referrer's referralCount when a new referral is created. */
+export const onReferralCreated = onDocumentCreated('referrals/{referralId}', async (event) => {
+  const snap = event.data;
+  if (!snap) return;
+  const data = snap.data() as { referrerId?: string };
+  const referrerId = data.referrerId;
+  if (!referrerId) return;
+  const db = getFirestore();
+  const userRef = db.doc(`users/${referrerId}`);
+  await userRef.set(
+    {
+      referralCount: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+});

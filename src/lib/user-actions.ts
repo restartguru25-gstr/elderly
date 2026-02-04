@@ -34,6 +34,12 @@ export type UserProfileAddon = {
   linkedProfiles?: string[];
   fcmToken?: string | null;
   notificationPreferences?: NotificationPreferences;
+  /** Unique referral code for sharing. Set by getOrCreateReferralCode. */
+  referralCode?: string | null;
+  /** User ID of the referrer, if user signed up via referral link. */
+  referredBy?: string | null;
+  /** Number of users who signed up via this user's referral link. Updated by Cloud Function. */
+  referralCount?: number;
 };
 
 /**
@@ -64,6 +70,8 @@ export function createUserProfile(
     language: additionalData.language || 'en',
     permissions: additionalData.permissions || { vitals: true, location: true },
     linkedProfiles: additionalData.linkedProfiles || [],
+    referredBy: additionalData.referredBy ?? null,
+    referralCount: additionalData.referralCount ?? 0,
     createdAt: serverTimestamp(),
   };
 

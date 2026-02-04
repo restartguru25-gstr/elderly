@@ -60,7 +60,7 @@ export default function AdminQuizzesPage() {
     () => query(collection(firestore, 'quizzes'), orderBy('quizDate', 'desc')),
     [firestore]
   );
-  const { data: rawData, isLoading, refresh } = useCollection(q);
+  const { data: rawData, isLoading } = useCollection(q);
   const quizzes = useMemo(() => (rawData ? rawData.map((d: any) => ({ id: d.id, ...d })) : []), [rawData]);
 
   const resetForm = useCallback(() => {
@@ -134,7 +134,6 @@ export default function AdminQuizzesPage() {
       toast({ title: 'Created', description: 'Quiz added.' });
       setAddOpen(false);
       resetForm();
-      await refresh();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Create failed', description: e?.message ?? 'Please try again.' });
     } finally {
@@ -144,7 +143,7 @@ export default function AdminQuizzesPage() {
         return next;
       });
     }
-  }, [firestore, storage, formTitle, formSponsorName, formSponsorBrandName, formSponsorBrandImageUrl, formSponsorBrandImageFile, formQuizDate, formStatus, formQuestionCount, toast, resetForm, refresh, validateImageFile]);
+  }, [firestore, storage, formTitle, formSponsorName, formSponsorBrandName, formSponsorBrandImageUrl, formSponsorBrandImageFile, formQuizDate, formStatus, formQuestionCount, toast, resetForm, validateImageFile]);
 
   const handleUpdate = useCallback(async () => {
     if (!editing || !formTitle.trim()) return;
@@ -173,7 +172,6 @@ export default function AdminQuizzesPage() {
       toast({ title: 'Updated', description: 'Quiz updated.' });
       setEditing(null);
       resetForm();
-      await refresh();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Update failed', description: e?.message ?? 'Please try again.' });
     } finally {
@@ -183,7 +181,7 @@ export default function AdminQuizzesPage() {
         return next;
       });
     }
-  }, [firestore, storage, editing, formTitle, formSponsorName, formSponsorBrandName, formSponsorBrandImageUrl, formSponsorBrandImageFile, formQuizDate, formStatus, formQuestionCount, toast, resetForm, refresh, validateImageFile]);
+  }, [firestore, storage, editing, formTitle, formSponsorName, formSponsorBrandName, formSponsorBrandImageUrl, formSponsorBrandImageFile, formQuizDate, formStatus, formQuestionCount, toast, resetForm, validateImageFile]);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -196,7 +194,6 @@ export default function AdminQuizzesPage() {
           setEditing(null);
           resetForm();
         }
-        await refresh();
       } catch (e: any) {
         toast({ variant: 'destructive', title: 'Delete failed', description: e?.message ?? 'Please try again.' });
       } finally {
@@ -207,7 +204,7 @@ export default function AdminQuizzesPage() {
         });
       }
     },
-    [firestore, toast, refresh, editing, resetForm]
+    [firestore, toast, editing, resetForm]
   );
 
   return (

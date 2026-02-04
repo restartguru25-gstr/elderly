@@ -29,7 +29,7 @@ export default getRequestConfig(async () => {
     messages: MESSAGES[locale],
     timeZone: 'Asia/Kolkata',
     getMessageFallback({ namespace, key }) {
-      if (namespace === 'nav' && key === 'quizzes') return 'Quizzes';
+      if (namespace === 'nav' && (key === 'quizzes' || key === 'referral')) return key === 'quizzes' ? 'Quizzes' : 'Referral';
       return key;
     },
   };

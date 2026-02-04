@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Wrench, ClipboardList, ChevronDown, BookOpen } from 'lucide-react';
+import { Home, Image, Stethoscope, Users, UsersRound, Briefcase, LogOut, User, Pill, HeartPulse, FileText, Siren, Crown, Plane, Trophy, ShoppingBag, Coins, Shield, ShieldCheck, MessageSquare, Smartphone, Wrench, ClipboardList, ChevronDown, BookOpen, Gift } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Logo } from '@/components/logo';
@@ -80,6 +80,7 @@ const navItems = [
   { href: '/dashboard/shop', icon: ShoppingBag, key: 'shop' },
   { href: '/dashboard/quizzes', icon: BookOpen, key: 'quizzes' },
   { href: '/dashboard/50above50', icon: Trophy, key: '50above50' },
+  { href: '/dashboard/referral', icon: Gift, key: 'referral' },
   { href: '/apply', icon: ClipboardList, key: 'partnerApply' },
   { href: '/dashboard/connected-devices', icon: Smartphone, key: 'connectedDevices' },
   { href: '/dashboard/emergency', icon: Siren, key: 'sos' },

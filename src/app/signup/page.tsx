@@ -14,11 +14,12 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserProfile } from '@/lib/user-actions';
+import { resolveReferralCode, recordReferral } from '@/lib/referral-actions';
 import { Loader2, User, Users, Check, ArrowLeft, Sparkles, Clock, Shield } from 'lucide-react';
 
 const createFormSchema = (acceptTermsError: string) =>
@@ -45,6 +46,8 @@ export default function SignupPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refCode = searchParams.get('ref') || searchParams.get('referral') || '';
   const t = useTranslations('auth');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'senior' | 'guardian' | null>(null);
@@ -73,15 +76,29 @@ export default function SignupPage() {
   const handleSignup = async (values: FormValues) => {
     setIsLoading(true);
     try {
+      let referrerId: string | null = null;
+      if (refCode.trim()) {
+        referrerId = await resolveReferralCode(firestore, refCode.trim());
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
-      
+
       await createUserProfile(firestore, user, {
         firstName: values.firstName,
         lastName: values.lastName,
         userType: values.role,
         phone: user.phoneNumber,
+        referredBy: referrerId ?? undefined,
       });
+
+      if (referrerId && referrerId !== user.uid) {
+        try {
+          await recordReferral(firestore, referrerId, user.uid, user.email ?? undefined);
+        } catch (e) {
+          console.warn('Referral record failed:', e);
+        }
+      }
 
       toast({
         title: 'Account Created! 🎉',

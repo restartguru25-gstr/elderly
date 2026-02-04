@@ -361,6 +361,25 @@ service cloud.firestore {
     }
 
     /**
+     * @description Referral config (tiers, rewards). Admin write; signed-in read.
+     * @path /referralConfig/settings
+     */
+    match /referralConfig/{docId} {
+      allow get: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Referral records. New user creates when signing up with ref code.
+     * @path /referrals/{referralId}
+     */
+    match /referrals/{referralId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn() && request.resource.data.refereeId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    /**
      * @description Family linking: maps invite codes to senior user IDs.
      * @path /linkCodes/{code}
      * @principle Seniors create codes; any signed-in user can read (to link by code).

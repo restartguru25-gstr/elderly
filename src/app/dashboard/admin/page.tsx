@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Users, Trophy, Briefcase, LayoutDashboard, Stethoscope, Plane, ShoppingBag, Wrench, UsersRound, FileCheck, Heart, BookOpen } from 'lucide-react';
+import { Users, Trophy, Briefcase, LayoutDashboard, Stethoscope, Plane, ShoppingBag, Wrench, UsersRound, FileCheck, Heart, BookOpen, Gift } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ const links = [
   { href: '/dashboard/admin/applications', label: 'Partner applications', desc: 'Review and approve doctor / service / shop applications from landing.', icon: FileCheck },
   { href: '/dashboard/admin/health-questions', label: 'Health questions', desc: 'Schedule Daily Health Check-in questions (2–3 per day, 15–20 days).', icon: Heart },
   { href: '/dashboard/admin/quizzes', label: 'Quizzes', desc: 'Create and manage topic-based quizzes with questions.', icon: BookOpen },
+  { href: '/dashboard/admin/referrals', label: 'Referral program', desc: 'Configure tiers (5/10/20) and rewards (monetary, medical test, gift coupon).', icon: Gift },
   { href: '/dashboard/50above50/admin', label: '50Above50 — Approvals', desc: 'Approve or reject contest submissions.', icon: Trophy },
   { href: '/dashboard/admin/skills', label: 'Skill listings', desc: 'Moderate and remove marketplace listings.', icon: Briefcase },
   { href: '/dashboard/admin/community', label: 'Community forums', desc: 'List and delete forums.', icon: UsersRound },
